@@ -128,9 +128,6 @@ void parse_option(int argc, char* argv[]) {
                 if ((gctx.value = atol(optarg)) <= 0) {
                     quit("countdown time should be more than 0");
                 };
-                // if (gctx.value < time(NULL)) {
-                //     gctx.mode = TICKTOCK;
-                // }
                 continue;
 	        }
             default: usage(); exit(0);
@@ -173,6 +170,14 @@ void draw_pause() {
     move(y, x); addstr(box1);
     attroff(COLOR_PAIR(GREEN)|A_BLINK);
     refresh();
+}
+
+void pause_count() {
+    int i;
+    draw_pause();
+    do {
+        i = getch();
+    } while (i != 'p');
 }
 
 
@@ -225,22 +230,15 @@ void recalc() {
 
 int countdown() {
     int c = 0;
-    bool pause = false;
-     do {
+    do {
         if ((c = getch()) != ERR) {
             switch (c) {
                 case 'c': { gctx.color = (gctx.color + 1) % COLORSIZE; break; }
                 case 'C': { gctx.color = (gctx.color + COLORSIZE - 1) % COLORSIZE; break; }
-                case 'p': { if (gctx.mode == TICKTOCK) pause = !pause; break; }
+                case 'p': { if (gctx.mode == TICKTOCK) pause_count(); break; }
                 case 'q': quit(0);
                 default: break;
             }
-        }
-
-        if (pause) { 
-            draw_pause();
-            usleep(500000);
-            continue;
         }
 
         draw();
