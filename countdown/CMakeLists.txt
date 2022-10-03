@@ -11,12 +11,16 @@ if (HAVE_GETOPT_H)
     add_definitions(-DHAVE_GETOPT_H)
 endif()
 
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
 set(CURSES_NEED_NCURSES TRUE)
 find_package(Curses)
 include_directories(${CURSES_INCLUDE_DIR})
 add_definitions(-DHAVE_NCURSES_H)
 
-add_executable(countdown countdown.c)
+aux_source_directory(${CMAKE_SOURCE_DIR}/src SRCS)  
+
+add_executable(countdown main.c ${SRCS})
 target_link_libraries(countdown ${CURSES_LIBRARIES})
 
 install(TARGETS countdown RUNTIME DESTINATION /usr/bin)
