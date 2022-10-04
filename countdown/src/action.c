@@ -1,7 +1,7 @@
 #include "action.h"
 #include "countdown.h"
 
-#include <ncurses.h>
+#include <curses.h>
 
 
 static ActionResCode quit(State* s) { 

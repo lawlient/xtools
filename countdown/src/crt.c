@@ -2,7 +2,7 @@
 #include "option.h"
 
 #include <stdlib.h>
-#include <ncurses.h>
+#include <curses.h>
 
 /* mark process enter curses mode */
 static bool CRT_INITIALIZED = false;

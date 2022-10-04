@@ -3,7 +3,7 @@
 #include "util.h"
 #include "crt.h"
 
-#include <ncurses.h>
+#include <curses.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -160,11 +160,14 @@ const char BIGTEXT[17][5][5] = {
 	  { 0,0,1,0,0 } },
 };
 
+static const cchar_t BLOCK = { .chars = {1222, '\0'}};
+static const cchar_t SYMBOL = { .chars = {'*', '\0'}};
+static const cchar_t DUMMY = { .chars = {' ', '\0'}};
 static void BigTextDrawHelper(int y, int x, int t) {
     for (int row = 0; row < 5; row++) {
         for (int col = 0; col < 5; col++)  {
-            char n = (BIGTEXT[t][row][col] == 1 ? (t > 9 ? '*' : 'O') : ' ');
-            mvaddch(y + row, x + col, n);
+            const cchar_t* n = (BIGTEXT[t][row][col] == 1 ? (t > 9 ? &SYMBOL : &BLOCK) : &DUMMY);
+            mvadd_wch(y + row, x + col, n);
         }
     }
 }
@@ -184,10 +187,12 @@ static void BigTextDraw(const Item* this) {
         while (day / 10) { c++; day /= 10; }
         int x = (COLS - BIGCOL * (c + 4) - (c - 1) - 6) / 2;
         x = COLS - x - BIGCOL;
+        attron(GREEN);
         BigTextDrawHelper(y, x, 15 /* S */); x -= BIGCOL + 1;
         BigTextDrawHelper(y, x, 16 /* Y */); x -= BIGCOL + 1;
         BigTextDrawHelper(y, x, 11 /* A */); x -= BIGCOL + 1;
         BigTextDrawHelper(y, x, 14 /* D */); x -= BIGCOL + 3;
+        attroff(GREEN);
         day = fmt->day;
         while (day) {
             int n = day % 10;

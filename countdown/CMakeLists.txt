@@ -13,14 +13,17 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
+set(CURSES_NEED_WIDE TRUE)
 set(CURSES_NEED_NCURSES TRUE)
 find_package(Curses)
 include_directories(${CURSES_INCLUDE_DIR})
-add_definitions(-DHAVE_NCURSES_H)
+add_definitions(-DNCURSES_WIDECHAR)
+
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/src SRCS)  
 
 add_executable(countdown main.c ${SRCS})
 target_link_libraries(countdown ${CURSES_LIBRARIES})
+message(${CURSES_LIBRARIES})
 
 install(TARGETS countdown RUNTIME DESTINATION /usr/bin)
