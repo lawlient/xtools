@@ -53,7 +53,7 @@ static void TextDraw(const Item* this) {
     strftime(buf, 20, "%H:%M:%S", &tm);
 
     clear();
-    int color = getcolorpair(this->color);
+    int color = COLOR_THEME[T_TEXT][this->color];
     attron(color);
 
     if (fmt->day) {
@@ -72,17 +72,17 @@ static void TextDraw(const Item* this) {
     refresh();
 }
 
-const char BIGTEXT[17][5][5] = {
+static const char BIGTEXT[17][5][5] = {
 	{ { 1,1,1,1,1 }, /* 0 */
 	  { 1,0,0,0,1 },
 	  { 1,0,0,0,1 },
 	  { 1,0,0,0,1 },
 	  { 1,1,1,1,1 } },
-	{ { 0,0,0,0,1 }, /* 1 */
-	  { 0,0,0,0,1 },
-	  { 0,0,0,0,1 },
-	  { 0,0,0,0,1 },
-	  { 0,0,0,0,1 } },
+	{ { 0,0,1,0,0 }, /* 1 */
+	  { 0,0,1,0,0 },
+	  { 0,0,1,0,0 },
+	  { 0,0,1,0,0 },
+	  { 0,0,1,0,0 } },
 	{ { 1,1,1,1,1 }, /* 2 */
 	  { 0,0,0,0,1 },
 	  { 1,1,1,1,1 },
@@ -160,13 +160,14 @@ const char BIGTEXT[17][5][5] = {
 	  { 0,0,1,0,0 } },
 };
 
-static void BigTextDrawHelper(int y, int x, int t) {
+static void BigTextDrawHelper(int y, int x, int t, int c) {
     for (int row = 0; row < 5; row++) {
         for (int col = 0; col < 5; col++)  {
             if (BIGTEXT[t][row][col] == 1) {
-                attron(COLOR_PAIR(BT));
+                int color = COLOR_THEME[T_BIG_TEXT][c];
+                attron(color);
                 mvaddch(y + row, x + col, ' ');
-                attroff(COLOR_PAIR(BT));
+                attroff(color);
             } else {
                 mvaddch(y + row, x + col, ' ');
             }
@@ -179,8 +180,6 @@ static void BigTextDraw(const Item* this) {
     static const int BIGCOL = 5;
 
     clear();
-    int color = getcolorpair(this->color);
-    attron(color);
     int x = 0, y = 0;
     if (fmt->day) {
         y = (LINES - 2 * BIGCOL - 2) / 2;
@@ -189,14 +188,14 @@ static void BigTextDraw(const Item* this) {
         while (day / 10) { c++; day /= 10; }
         int x = (COLS - BIGCOL * (c + 4) - (c - 1) - 6) / 2;
         x = COLS - x - BIGCOL;
-        BigTextDrawHelper(y, x, 15 /* S */); x -= BIGCOL + 1;
-        BigTextDrawHelper(y, x, 16 /* Y */); x -= BIGCOL + 1;
-        BigTextDrawHelper(y, x, 11 /* A */); x -= BIGCOL + 1;
-        BigTextDrawHelper(y, x, 14 /* D */); x -= BIGCOL + 3;
+        BigTextDrawHelper(y, x, 15 /* S */, this->color); x -= BIGCOL + 1;
+        BigTextDrawHelper(y, x, 16 /* Y */, this->color); x -= BIGCOL + 1;
+        BigTextDrawHelper(y, x, 11 /* A */, this->color); x -= BIGCOL + 1;
+        BigTextDrawHelper(y, x, 14 /* D */, this->color); x -= BIGCOL + 3;
         day = fmt->day;
         while (day) {
             int n = day % 10;
-            BigTextDrawHelper(y, x, n);
+            BigTextDrawHelper(y, x, n, this->color);
             x -= BIGCOL + 1;
             day = day / 10;
         }
@@ -206,15 +205,14 @@ static void BigTextDraw(const Item* this) {
         y = (LINES - 5) / 2;
     }
     x = (COLS - BIGCOL * 8 - 7) / 2;
-    BigTextDrawHelper(y, x, fmt->hour / 10); x += BIGCOL+1;
-    BigTextDrawHelper(y, x, fmt->hour % 10); x += BIGCOL+1;
-    BigTextDrawHelper(y, x, 10); x += BIGCOL+1;
-    BigTextDrawHelper(y, x, fmt->minute / 10); x += BIGCOL+1;
-    BigTextDrawHelper(y, x, fmt->minute % 10); x += BIGCOL+1;
-    BigTextDrawHelper(y, x, 10); x += BIGCOL+1;
-    BigTextDrawHelper(y, x, fmt->second / 10); x += BIGCOL+1;
-    BigTextDrawHelper(y, x, fmt->second % 10);
-    attroff(color);
+    BigTextDrawHelper(y, x, fmt->hour / 10, this->color); x += BIGCOL+1;
+    BigTextDrawHelper(y, x, fmt->hour % 10, this->color); x += BIGCOL+1;
+    BigTextDrawHelper(y, x, 10, this->color); x += BIGCOL+1;
+    BigTextDrawHelper(y, x, fmt->minute / 10, this->color); x += BIGCOL+1;
+    BigTextDrawHelper(y, x, fmt->minute % 10, this->color); x += BIGCOL+1;
+    BigTextDrawHelper(y, x, 10, this->color); x += BIGCOL+1;
+    BigTextDrawHelper(y, x, fmt->second / 10, this->color); x += BIGCOL+1;
+    BigTextDrawHelper(y, x, fmt->second % 10, this->color);
 
     refresh();
 }

@@ -6,10 +6,15 @@ typedef enum Color_ {
     RED,
     GREEN,
     CYAN,
+    BLUE,
     COLORSIZE,
-
-    BT,  // after SIZE
 } Color;
+
+typedef enum CTheme_ {
+    T_TEXT,
+    T_BIG_TEXT,
+} CTheme;
+extern const int COLOR_THEME[][COLORSIZE];
 
 typedef enum Mode_ {
     TICKTOCK, // countdown for specific seconds, you can pause it and continue it

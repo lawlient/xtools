@@ -35,21 +35,21 @@ static ActionResCode pause(State* s) {
 
 static ActionResCode changeColorForward(State* s) {
     s->item->color = (s->item->color + 1) % COLORSIZE;
-    return OK;
+    return OK | REFRESH;
 }
 
 static ActionResCode changeColorBackward(State* s) {
     s->item->color = (s->item->color + COLORSIZE - 1) % COLORSIZE;
-    return OK;
+    return OK | REFRESH;
 }
 
 static ActionResCode changeDrawForward(State* s) {
     s->item->draw = (s->item->draw + 1) % DRAWMODESIZE;
-    return OK;
+    return OK | REFRESH;
 }
 static ActionResCode changeDrawBackward(State* s) {
     s->item->draw = (s->item->draw + DRAWMODESIZE - 1) % DRAWMODESIZE;
-    return OK;
+    return OK | REFRESH;
 }
 
 Action* Actions_keys() {

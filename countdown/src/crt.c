@@ -7,15 +7,23 @@
 /* mark process enter curses mode */
 static bool CRT_INITIALIZED = false;
 
-int getcolorpair(Color c) {
-    switch (c) {
-        case RED: return COLOR_PAIR(RED);
-        case GREEN: return COLOR_PAIR(GREEN);
-        case CYAN: return COLOR_PAIR(CYAN);
-        default: break;
+#define colorpair_num(t, c) ( t * COLORSIZE + c )
+const int COLOR_THEME[][COLORSIZE] = {
+    {
+        COLOR_PAIR(colorpair_num(T_TEXT, CUSTOM)),
+        COLOR_PAIR(colorpair_num(T_TEXT, RED)),
+        COLOR_PAIR(colorpair_num(T_TEXT, GREEN)),
+        COLOR_PAIR(colorpair_num(T_TEXT, CYAN)),
+        COLOR_PAIR(colorpair_num(T_TEXT, BLUE)),
+    },
+    {
+        COLOR_PAIR(colorpair_num(T_BIG_TEXT, CUSTOM)),
+        COLOR_PAIR(colorpair_num(T_BIG_TEXT, RED)),
+        COLOR_PAIR(colorpair_num(T_BIG_TEXT, GREEN)),
+        COLOR_PAIR(colorpair_num(T_BIG_TEXT, CYAN)),
+        COLOR_PAIR(colorpair_num(T_BIG_TEXT, BLUE)),
     }
-    return COLOR_PAIR(CUSTOM);
-}
+};
 
 void quit(char* msg) {
     if (msg) printf("%s\n", msg);
@@ -26,11 +34,18 @@ void quit(char* msg) {
 static void initcolor() {
     if (!has_colors()) return;
     start_color();
-    init_pair(CUSTOM, COLOR_WHITE,  COLOR_BLACK);
-    init_pair(RED, COLOR_RED,  COLOR_BLACK);
-    init_pair(GREEN, COLOR_GREEN,  COLOR_BLACK);
-    init_pair(CYAN, COLOR_CYAN,  COLOR_BLACK);
-    init_pair(BT, COLOR_WHITE, COLOR_BLUE);
+
+    init_pair(colorpair_num(T_TEXT, CUSTOM), COLOR_WHITE,  COLOR_BLACK);
+    init_pair(colorpair_num(T_TEXT, RED), COLOR_RED,  COLOR_BLACK);
+    init_pair(colorpair_num(T_TEXT, GREEN), COLOR_GREEN,  COLOR_BLACK);
+    init_pair(colorpair_num(T_TEXT, CYAN), COLOR_CYAN,  COLOR_BLACK);
+    init_pair(colorpair_num(T_TEXT, BLUE), COLOR_BLUE,  COLOR_BLACK);
+
+    init_pair(colorpair_num(T_BIG_TEXT, CUSTOM), COLOR_WHITE, COLOR_WHITE);
+    init_pair(colorpair_num(T_BIG_TEXT, RED), COLOR_RED,  COLOR_RED);
+    init_pair(colorpair_num(T_BIG_TEXT, GREEN), COLOR_GREEN,  COLOR_GREEN);
+    init_pair(colorpair_num(T_BIG_TEXT, CYAN), COLOR_CYAN,  COLOR_CYAN);
+    init_pair(colorpair_num(T_BIG_TEXT, BLUE), COLOR_BLUE,  COLOR_BLUE);
 }
 
 void initcrt() {
