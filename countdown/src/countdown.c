@@ -160,14 +160,16 @@ const char BIGTEXT[17][5][5] = {
 	  { 0,0,1,0,0 } },
 };
 
-static const cchar_t BLOCK = { .chars = {1222, '\0'}};
-static const cchar_t SYMBOL = { .chars = {'*', '\0'}};
-static const cchar_t DUMMY = { .chars = {' ', '\0'}};
 static void BigTextDrawHelper(int y, int x, int t) {
     for (int row = 0; row < 5; row++) {
         for (int col = 0; col < 5; col++)  {
-            const cchar_t* n = (BIGTEXT[t][row][col] == 1 ? (t > 9 ? &SYMBOL : &BLOCK) : &DUMMY);
-            mvadd_wch(y + row, x + col, n);
+            if (BIGTEXT[t][row][col] == 1) {
+                attron(COLOR_PAIR(BT));
+                mvaddch(y + row, x + col, ' ');
+                attroff(COLOR_PAIR(BT));
+            } else {
+                mvaddch(y + row, x + col, ' ');
+            }
         }
     }
 }
@@ -187,12 +189,10 @@ static void BigTextDraw(const Item* this) {
         while (day / 10) { c++; day /= 10; }
         int x = (COLS - BIGCOL * (c + 4) - (c - 1) - 6) / 2;
         x = COLS - x - BIGCOL;
-        attron(GREEN);
         BigTextDrawHelper(y, x, 15 /* S */); x -= BIGCOL + 1;
         BigTextDrawHelper(y, x, 16 /* Y */); x -= BIGCOL + 1;
         BigTextDrawHelper(y, x, 11 /* A */); x -= BIGCOL + 1;
         BigTextDrawHelper(y, x, 14 /* D */); x -= BIGCOL + 3;
-        attroff(GREEN);
         day = fmt->day;
         while (day) {
             int n = day % 10;
@@ -224,24 +224,29 @@ static const Draw draws[DRAWMODESIZE] = {
     TextDraw,
     BigTextDraw,
 };
-static void Item_draw(const Item* this) {
+static void Item_draw(const Item* this, ActionResCode* res) {
+    if (!(*res & REFRESH)) return;
     if (draws[this->draw]) {
         draws[this->draw](this);
     } else {
         draws[TEXT](this);
     }
+    *res &= ~REFRESH;
 }
 
-static void Item_count(Item* this) {
+static void Item_count(Item* this, ActionResCode* res) {
+    static const long kInterval = 200/*ms*/;
     switch (this->mode) {
     case TICKTOCK: {
-        usleep(200 * 1000);
-        this->value -= 200/*ms*/;
+        usleep(kInterval * 1000);
+        this->value -= kInterval/*ms*/;
+        if (this->value / 1000 != (this->value + kInterval) /1000) *res |= REFRESH;
         if (this->value < 0) this->done = 1;
         break;
     }
     case DEADLINE: {
-        usleep(500 * 1000); 
+        usleep(kInterval * 1000); 
+        *res |= REFRESH;
         if (time(NULL) * 1000 > this->value) this->done = 1;
         break;
     }
@@ -252,7 +257,7 @@ static void Item_count(Item* this) {
 void Item_run(Item* this) {
     initcrt();
     
-    ActionResCode res = OK;
+    ActionResCode res = OK | REFRESH;
     do {
         int c = 0;
         if ((c = getch()) != ERR) {
@@ -261,9 +266,9 @@ void Item_run(Item* this) {
 
         if (this->done) break;
 
-        Item_draw(this);
+        Item_draw(this, &res);
 
-        Item_count(this);
+        Item_count(this, &res);
 
     } while (!this->done);
 

@@ -2,7 +2,8 @@
 #define ACTION_H
 
 typedef enum {
-    OK,
+    OK = 0x0,
+    REFRESH = 0x1,
 } ActionResCode;
 
 struct Item_;

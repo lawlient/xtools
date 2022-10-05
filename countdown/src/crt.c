@@ -30,11 +30,13 @@ static void initcolor() {
     init_pair(RED, COLOR_RED,  COLOR_BLACK);
     init_pair(GREEN, COLOR_GREEN,  COLOR_BLACK);
     init_pair(CYAN, COLOR_CYAN,  COLOR_BLACK);
+    init_pair(BT, COLOR_WHITE, COLOR_BLUE);
 }
 
 void initcrt() {
     initscr();
     noecho();
+    nonl();
     nodelay(stdscr, true);
     curs_set(0); /* hide cursor */
     keypad(stdscr, true);

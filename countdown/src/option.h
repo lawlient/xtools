@@ -7,6 +7,8 @@ typedef enum Color_ {
     GREEN,
     CYAN,
     COLORSIZE,
+
+    BT,  // after SIZE
 } Color;
 
 typedef enum Mode_ {
