@@ -45,10 +45,12 @@ static ActionResCode changeColorBackward(State* s) {
 
 static ActionResCode changeDrawForward(State* s) {
     s->item->draw = (s->item->draw + 1) % DRAWMODESIZE;
+    clear(); /* 清除当前屏幕 */
     return OK | REFRESH;
 }
 static ActionResCode changeDrawBackward(State* s) {
     s->item->draw = (s->item->draw + DRAWMODESIZE - 1) % DRAWMODESIZE;
+    clear(); /* 清除当前屏幕 */
     return OK | REFRESH;
 }
 

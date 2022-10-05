@@ -10,18 +10,18 @@ static bool CRT_INITIALIZED = false;
 #define colorpair_num(t, c) ( t * COLORSIZE + c )
 const int COLOR_THEME[][COLORSIZE] = {
     {
-        COLOR_PAIR(colorpair_num(T_TEXT, CUSTOM)),
-        COLOR_PAIR(colorpair_num(T_TEXT, RED)),
-        COLOR_PAIR(colorpair_num(T_TEXT, GREEN)),
-        COLOR_PAIR(colorpair_num(T_TEXT, CYAN)),
-        COLOR_PAIR(colorpair_num(T_TEXT, BLUE)),
+        COLOR_PAIR(colorpair_num(T_DEFAULT, CUSTOM)),
+        COLOR_PAIR(colorpair_num(T_DEFAULT, RED)),
+        COLOR_PAIR(colorpair_num(T_DEFAULT, GREEN)),
+        COLOR_PAIR(colorpair_num(T_DEFAULT, CYAN)),
+        COLOR_PAIR(colorpair_num(T_DEFAULT, BLUE)),
     },
     {
-        COLOR_PAIR(colorpair_num(T_BIG_TEXT, CUSTOM)),
-        COLOR_PAIR(colorpair_num(T_BIG_TEXT, RED)),
-        COLOR_PAIR(colorpair_num(T_BIG_TEXT, GREEN)),
-        COLOR_PAIR(colorpair_num(T_BIG_TEXT, CYAN)),
-        COLOR_PAIR(colorpair_num(T_BIG_TEXT, BLUE)),
+        COLOR_PAIR(colorpair_num(T_BG, CUSTOM)),
+        COLOR_PAIR(colorpair_num(T_BG, RED)),
+        COLOR_PAIR(colorpair_num(T_BG, GREEN)),
+        COLOR_PAIR(colorpair_num(T_BG, CYAN)),
+        COLOR_PAIR(colorpair_num(T_BG, BLUE)),
     }
 };
 
@@ -35,17 +35,17 @@ static void initcolor() {
     if (!has_colors()) return;
     start_color();
 
-    init_pair(colorpair_num(T_TEXT, CUSTOM), COLOR_WHITE,  COLOR_BLACK);
-    init_pair(colorpair_num(T_TEXT, RED), COLOR_RED,  COLOR_BLACK);
-    init_pair(colorpair_num(T_TEXT, GREEN), COLOR_GREEN,  COLOR_BLACK);
-    init_pair(colorpair_num(T_TEXT, CYAN), COLOR_CYAN,  COLOR_BLACK);
-    init_pair(colorpair_num(T_TEXT, BLUE), COLOR_BLUE,  COLOR_BLACK);
+    init_pair(colorpair_num(T_DEFAULT, CUSTOM), COLOR_WHITE,  COLOR_BLACK);
+    init_pair(colorpair_num(T_DEFAULT, RED), COLOR_RED,  COLOR_BLACK);
+    init_pair(colorpair_num(T_DEFAULT, GREEN), COLOR_GREEN,  COLOR_BLACK);
+    init_pair(colorpair_num(T_DEFAULT, CYAN), COLOR_CYAN,  COLOR_BLACK);
+    init_pair(colorpair_num(T_DEFAULT, BLUE), COLOR_BLUE,  COLOR_BLACK);
 
-    init_pair(colorpair_num(T_BIG_TEXT, CUSTOM), COLOR_WHITE, COLOR_WHITE);
-    init_pair(colorpair_num(T_BIG_TEXT, RED), COLOR_RED,  COLOR_RED);
-    init_pair(colorpair_num(T_BIG_TEXT, GREEN), COLOR_GREEN,  COLOR_GREEN);
-    init_pair(colorpair_num(T_BIG_TEXT, CYAN), COLOR_CYAN,  COLOR_CYAN);
-    init_pair(colorpair_num(T_BIG_TEXT, BLUE), COLOR_BLUE,  COLOR_BLUE);
+    init_pair(colorpair_num(T_BG, CUSTOM), COLOR_WHITE, COLOR_WHITE);
+    init_pair(colorpair_num(T_BG, RED), COLOR_RED,  COLOR_RED);
+    init_pair(colorpair_num(T_BG, GREEN), COLOR_GREEN,  COLOR_GREEN);
+    init_pair(colorpair_num(T_BG, CYAN), COLOR_CYAN,  COLOR_CYAN);
+    init_pair(colorpair_num(T_BG, BLUE), COLOR_BLUE,  COLOR_BLUE);
 }
 
 void initcrt() {

@@ -11,8 +11,8 @@ typedef enum Color_ {
 } Color;
 
 typedef enum CTheme_ {
-    T_TEXT,
-    T_BIG_TEXT,
+    T_DEFAULT,
+    T_BG,
 } CTheme;
 extern const int COLOR_THEME[][COLORSIZE];
 

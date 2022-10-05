@@ -52,8 +52,7 @@ static void TextDraw(const Item* this) {
     char buf[20] = {0};
     strftime(buf, 20, "%H:%M:%S", &tm);
 
-    clear();
-    int color = COLOR_THEME[T_TEXT][this->color];
+    int color = COLOR_THEME[T_DEFAULT][this->color];
     attron(color);
 
     if (fmt->day) {
@@ -164,7 +163,7 @@ static void BigTextDrawHelper(int y, int x, int t, int c) {
     for (int row = 0; row < 5; row++) {
         for (int col = 0; col < 5; col++)  {
             if (BIGTEXT[t][row][col] == 1) {
-                int color = COLOR_THEME[T_BIG_TEXT][c];
+                int color = COLOR_THEME[T_BG][c];
                 attron(color);
                 mvaddch(y + row, x + col, ' ');
                 attroff(color);
@@ -179,7 +178,6 @@ static void BigTextDraw(const Item* this) {
     const Formatime* fmt = Item_getmodetime(this);
     static const int BIGCOL = 5;
 
-    clear();
     int x = 0, y = 0;
     if (fmt->day) {
         y = (LINES - 2 * BIGCOL - 2) / 2;
