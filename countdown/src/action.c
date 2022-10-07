@@ -54,6 +54,11 @@ static ActionResCode changeDrawBackward(State* s) {
     return OK | REFRESH;
 }
 
+static ActionResCode ttyResize(State* s) {
+    clear();
+    return OK | REFRESH;
+}
+
 Action* Actions_keys() {
     static Action actions[KEY_MAX];
     static bool once_init = false;
@@ -64,6 +69,7 @@ Action* Actions_keys() {
     actions['C'] = changeColorBackward;
     actions['m'] = changeDrawForward;
     actions['M'] = changeDrawBackward;
+    actions[KEY_RESIZE] = ttyResize;
     once_init = true;
     return actions;
 }
