@@ -1,31 +1,43 @@
 #ifndef COUNTDOWN_H
 #define COUNTDOWN_H
 
+#include "draw.h"
 #include "action.h"
-#include "option.h"
 
-typedef enum DrawMode_ {
-    TEXT = 0,
-    BIGTXT,
-    DRAWMODESIZE,
-} DrawMode;
+struct Item_;
+typedef struct Item_ Item;
 
-typedef struct Item_ {
+
+typedef struct Formatime_ *(*Item_Time)(const Item*);
+typedef void (*Item_Count)(Item*);
+
+typedef struct Vtable_ {
+    Item_Time getime;
+    Item_Count count;
+} Vtable;
+
+#define Item_GetimeFn(item) (item->vt.getime)
+#define Item_Getime(item)  (item->vt.getime(item))
+
+struct Item_ {
     Color color;
-    Mode mode;
     long value;
     int quit;
     DrawMode draw;
+    Vtable vt;
 
-    State* st;
-    Action* actions;
-} Item;
+    struct State_* st;
+    Action *actions;
+};
 
+struct Option_;
 /* create a countdown object from commandline option */
-extern Item* Item_new(const Option* opt);
+extern Item* Item_new(const struct Option_* opt);
 
 extern void Item_delete(Item* this);
 
 extern void Item_run(Item* this);
+
+extern void Item_draw(const Item* this);
 
 #endif

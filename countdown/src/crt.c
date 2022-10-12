@@ -1,4 +1,5 @@
 #include "crt.h"
+#include "draw.h"
 #include "option.h"
 
 #include <stdlib.h>

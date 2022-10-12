@@ -2,8 +2,8 @@
 #define ACTION_H
 
 typedef enum {
-    OK = 0x0,
-    QUIT = 0x1,
+    ACT_OK = 0x0,
+    ACT_QUIT = 0x1,
 } ActionResCode;
 
 struct Item_;
@@ -13,7 +13,10 @@ typedef struct State_ {
 
 typedef ActionResCode (*Action)(State* s);
 
-Action* Actions_keys();
+struct Item_;
+typedef struct  Item_ Item;
+void BindDefaultKeys(Item *this);
+void BindDeadlineKeys(Item *this);
 
 
 #endif
