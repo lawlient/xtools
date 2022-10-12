@@ -27,6 +27,7 @@ static ActionResCode pause(State* s) {
             break;
         }
     }
+    clear();
     return OK;
 }
 
