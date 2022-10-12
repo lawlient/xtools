@@ -3,7 +3,7 @@
 
 typedef enum {
     OK = 0x0,
-    REFRESH = 0x1,
+    QUIT = 0x1,
 } ActionResCode;
 
 struct Item_;

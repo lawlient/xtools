@@ -16,12 +16,7 @@ Item* Item_new(const Option* opt) {
     this->color = opt->color;
     this->mode  = opt->mode;
     this->value = opt->sec * 1000 /* ms */;
-    this->done  = 0;
     this->draw  = TEXT;
-
-    if (0 == this->value) {
-        this->value = 25 * 60 * 1000;
-    }
 
     this->st = (State*)malloc(sizeof(State));
     this->st->item = this;
@@ -37,7 +32,9 @@ void Item_delete(Item* this) {
 
 static Formatime* Item_getmodetime(const Item* this) {
     switch (this->mode) {
-    case TICKTOCK: return getformatime(this->value);
+    case TICKTOCK: 
+    case STOPWATCH: 
+        return getformatime(this->value);
     case DEADLINE: return getformatime(this->value - time(NULL) * 1000);
     }
     return getformatime(this->value);
@@ -220,53 +217,59 @@ static const Draw draws[DRAWMODESIZE] = {
     TextDraw,
     BigTextDraw,
 };
-static void Item_draw(const Item* this, ActionResCode* res) {
-    if (!(*res & REFRESH)) return;
+static void Item_draw(const Item* this) {
     if (draws[this->draw]) {
         draws[this->draw](this);
     } else {
         draws[TEXT](this);
     }
-    *res &= ~REFRESH;
 }
 
-static void Item_count(Item* this, ActionResCode* res) {
+// todo 改成状态模式
+static void Item_count(Item* this) {
     static const long kInterval = 200/*ms*/;
     switch (this->mode) {
     case TICKTOCK: {
         usleep(kInterval * 1000);
         this->value -= kInterval/*ms*/;
-        if (this->value / 1000 != (this->value + kInterval) /1000) *res |= REFRESH;
-        if (this->value < 0) this->done = 1;
+        if (this->value <= 0) {
+            this->mode = STOPWATCH;
+        }
         break;
     }
     case DEADLINE: {
         usleep(kInterval * 1000); 
-        *res |= REFRESH;
-        if (time(NULL) * 1000 > this->value) this->done = 1;
+        if (time(NULL) * 1000 > this->value) {
+            this->value = 0;
+            this->mode = STOPWATCH;
+        }
         break;
     }
-    default: this->done = 1;
+    case STOPWATCH: {
+        usleep(kInterval * 1000); 
+        this->value += kInterval/*ms*/;
+        break;
+    }
     }
 }
 
 void Item_run(Item* this) {
     initcrt();
     
-    ActionResCode res = OK | REFRESH;
+    ActionResCode res = OK;
     do {
         int c = 0;
         if ((c = getch()) != ERR) {
             if (this->actions[c]) res = this->actions[c](this->st);
         }
 
-        if (this->done) break;
+        if (res & QUIT) break;
 
-        Item_draw(this, &res);
+        Item_draw(this);
 
-        Item_count(this, &res);
+        Item_count(this);
 
-    } while (!this->done);
+    } while (1);
 
     Item_delete(this);
 

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #ifdef HAVE_GETOPT_H
     #include <getopt.h>
@@ -12,7 +13,7 @@
 
 static Option opt = {
     .color = CUSTOM,
-    .mode = TICKTOCK,
+    .mode  = STOPWATCH,
     .sec = 0,
 };
 
@@ -22,9 +23,6 @@ void usage() {
            "  -V: Print version information and exit\n\n"
            "  -c [color]: color for text, you can change it with key 'c' \n"
            "     {custom, red, green, cyan}\n\n"
-           "  -d : deadline mode, you cannot change it after you start\n"
-           "     ticks    : [default mode] countdown for specific seconds, you can pause it and continue it again\n"
-           "     deadline : countdown for deadline, you can not pause it\n\n"
            "  -t [sec|deadline]: specific your time\n");
 }
 
@@ -37,7 +35,7 @@ void version() {
 Option* parse_option(int argc, char* argv[]) {
     opterr = 0;
     int optchr;
-    while ((optchr = getopt(argc, argv, "c:dt:hV")) != EOF) {
+    while ((optchr = getopt(argc, argv, "c:t:hV")) != EOF) {
         switch(optchr) {
             case 'h': usage(); exit(0);
             case 'V': version(); exit(0);
@@ -53,14 +51,12 @@ Option* parse_option(int argc, char* argv[]) {
                 }
                 continue;
             }
-            case 'd': {
-                opt.mode = DEADLINE;
-                continue;
-            }
             case 't': {
                 if ((opt.sec = atol(optarg)) <= 0) {
                     quit("countdown time should be more than 0");
                 };
+                long now = time(0);
+                opt.mode = (now < opt.sec ? DEADLINE : TICKTOCK);
                 continue;
 	        }
             default: usage(); exit(0);

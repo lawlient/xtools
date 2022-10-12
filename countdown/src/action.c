@@ -4,10 +4,7 @@
 #include <curses.h>
 
 
-static ActionResCode quit(State* s) { 
-    s->item->done = 1;
-    return OK;
-}
+static ActionResCode quit(State* s) { return QUIT; }
 
 static ActionResCode pause(State* s) {
     if (s->item->mode == DEADLINE) return OK; /* 不支持暂停 */
@@ -35,28 +32,28 @@ static ActionResCode pause(State* s) {
 
 static ActionResCode changeColorForward(State* s) {
     s->item->color = (s->item->color + 1) % COLORSIZE;
-    return OK | REFRESH;
+    return OK;
 }
 
 static ActionResCode changeColorBackward(State* s) {
     s->item->color = (s->item->color + COLORSIZE - 1) % COLORSIZE;
-    return OK | REFRESH;
+    return OK;
 }
 
 static ActionResCode changeDrawForward(State* s) {
     s->item->draw = (s->item->draw + 1) % DRAWMODESIZE;
     clear(); /* 清除当前屏幕 */
-    return OK | REFRESH;
+    return OK;
 }
 static ActionResCode changeDrawBackward(State* s) {
     s->item->draw = (s->item->draw + DRAWMODESIZE - 1) % DRAWMODESIZE;
     clear(); /* 清除当前屏幕 */
-    return OK | REFRESH;
+    return OK;
 }
 
 static ActionResCode ttyResize(State* s) {
     clear();
-    return OK | REFRESH;
+    return OK;
 }
 
 Action* Actions_keys() {

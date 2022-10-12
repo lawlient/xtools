@@ -19,6 +19,7 @@ extern const int COLOR_THEME[][COLORSIZE];
 typedef enum Mode_ {
     TICKTOCK, // countdown for specific seconds, you can pause it and continue it
     DEADLINE, // countdown for deadline, you can not pause it
+    STOPWATCH, // stopwatch 
 } Mode;
 
 typedef struct Option_ {

@@ -14,7 +14,7 @@ typedef struct Item_ {
     Color color;
     Mode mode;
     long value;
-    int done;
+    int quit;
     DrawMode draw;
 
     State* st;
