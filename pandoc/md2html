@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# this is bash script for converting markdown file to html file
+# the target file will be generated in current dir
+
+if [[ $# < 1 ]];then
+    echo "usage: $(basename $0) filename"
+    exit 0
+fi
+
+if [ ! -f "$1" ]; then
+    echo $1 " is not a file"
+    echo ""
+    echo "usage: $0 filename"
+    exit 0
+fi
+
+bname=$(basename $1 .md)
+# echo $bname
+
+# it will be better format for checkbox if pandoc version is 2.6 or higher
+pandoc --embed-resources --standalone --metadata title="$bname" --css /usr/local/share/pandoc/css/buttomdown.css -f markdown -t html -o $bname.html $1
+
