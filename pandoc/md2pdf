@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# this is bash script for converting markdown file to pdf file
+# the target file will be generated in current dir
+
+
+function usage {
+    echo "usage: $(basename $0) filename"
+}
+
+if [[ $# < 1 ]];then
+    usage
+    exit 0
+fi
+
+if [ ! -f "$1" ]; then
+    echo $1 " is not a file"
+    echo ""
+    usage
+    exit 0
+fi
+
+bname=$(basename $1 .md)
+# echo $bname
+
+# it will be better format for checkbox if pandoc version is 2.6 or higher
+pandoc --embed-resources --standalone --metadata title="$bname" --pdf-engine=xelatex --css /usr/local/share/pandoc/css/buttomdown.css -f markdown -t pdf -o $bname.pdf $1
+

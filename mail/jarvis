@@ -1,0 +1,57 @@
+#/usr/bin/bash
+
+TOPIC="Report From Jarvis"
+
+CONFIG_PREFIX=$HOME/.config/jarvis
+CONFIG=$CONFIG_PREFIX/id
+
+
+function usage {
+    echo "Usage : $(basename $0) [cht] mailfile"
+    echo " -h print help info"
+    echo " -c editor config"
+    echo " -m specific mail file"
+    echo " -t specific topic"
+}
+
+function config {
+    [ -f $CONFIG ] && vim $CONFIG && exit 0
+    mkdir -p $CONFIG_PREFIX
+    cat << EOF > $CONFIG
+# This is a default config file
+
+# the mail address for sending email
+SENDER=
+
+#stmp server address, you can change the default one
+STMP_ADDR=smtp.163.com
+
+#邮件接收地址，使用逗号分隔
+RECEIVER=
+
+EOF
+
+    vim $CONFIG && exit 0
+}
+
+while getopts chm:t: opt
+do
+    case "${opt}" in
+    c) config;;
+    h|*) usage && exit 0;;
+    m) MSG=${OPTARG};;
+    t) [ -z ${OPTARG} ] || TOPIC=${OPTARG};;
+    esac
+done
+
+sender=`grep SENDER $CONFIG | awk -F '=' '{print $2}'`
+stmp_addr=`grep STMP_ADDR $CONFIG | awk -F '=' '{print $2}'`
+receiver=`grep RECEIVER $CONFIG | awk -F '=' '{print $2}'`
+
+if [[ -z $MSG || ! -f "$MSG" ]]; then
+    echo "$MSG is not a file"
+    usage
+    exit 1
+fi
+
+gpg -dq $CONFIG_PREFIX/secret.gpg | sshpass sendEmail -u $TOPIC -f $sender -s $stmp_addr -t $receiver -xu $sender -o tls=auto message-file="$MSG"
