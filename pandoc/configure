@@ -1,0 +1,30 @@
+#! /usr/bin/bash
+
+# install pandoc
+
+pandoc --version > /dev/null
+
+if [[ 0 != $? ]];then
+    mkdir -p /tmp/pandoc/ && cd /tmp/pandoc && \
+    wget https://github.com/jgm/pandoc/releases/download/2.19.2/pandoc-2.19.2-1-amd64.deb
+
+    sudo dpkg -i /tmp/pandoc/pandoc-2.19.2-1-amd64.deb
+
+    rm /tmp/pandoc -rf
+fi
+pandoc --version | head
+
+# install tex relative
+apt install texlive texlive-latex-extra texlive-latex-recommended texlive-xetex texlive-lang-chinese
+
+
+# install font
+apt install fontconfig && fc-list :lang=zh
+
+# since the size of font file is kind of huge，didn't find a good way to restore it
+# you can download it from network or 
+# copy in your windows system, default location is C:\Windows/Fonts
+
+# after you put font files in a directory successfully
+# exec `mkfontscale` in fonts directory to generate font index
+# you can you `fc-list :lang=zh` to check the font installed in your system
