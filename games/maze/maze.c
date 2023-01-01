@@ -31,7 +31,7 @@ struct x_s {
 
 struct round_s {
     int level;      // current round of game
-    char m[MY][MX+1];       // store the map
+    char m[MY][MX];       // store the map
     x_t x;          // represent the human
 };
 
@@ -82,24 +82,31 @@ int map_loader(round_t* r) {
     }
     fprintf(glog, "open %s success.\n", mapname);
 
+    char obj;
+    r->x.x = 0;
+    r->x.y = 0;
     for (int y = 0; y < MY; y++) {
         for (int x = 0; x <= MX; x++) {
-            fscanf(f, "%c", &r->m[y][x]);
-            if (r->m[y][x] == 'X') {
-                r->x.x = x;
-                r->x.y = y;
+            fscanf(f, "%c", &obj);
+            switch (obj) {
+                case '0': r->m[y][x] = '0'; break;
+                case '1': r->m[y][x] = '1'; break;
+                case '2': r->m[y][x] = '2'; break;
+                case 'X': {
+                    r->m[y][x] = 'X'; 
+                    if (r->x.x || r->x.y) {
+                        return 2;
+                    } 
+                    r->x.x = x;
+                    r->x.y = y;
+                    break;
+                }
             }
         }
     }
 
     fclose(f);
 
-    ///for (int y = 0; y < MY; y++) {
-    ///    for (int x = 0; x <= MX; x++) {
-    ///        fprintf(glog, "%c", r->m[y][x]);
-    ///    }
-    ///}
-    ///return 1;
     return 0;
 }
 
@@ -115,7 +122,7 @@ void map_running(round_t* r) {
             }
         }
 
-        usleep(100 * 1000);
+        usleep(1 * 1000);
     } while(true);
 }
 
@@ -212,7 +219,7 @@ int human_move(round_t *r, int key) {
         break;
     }
     default:
-        return -1;
+        return 0;
     }
 
     if (x == -1 || y == -1) return 0;
@@ -245,7 +252,7 @@ void winner_draw() {
     attron(A_BLINK);
     mvaddstr(LINES/2, COLS/2 - 3, "WINNER");
     attroff(A_BLINK);
-    while ('q' != getch()) ;
+    while (ERR == getch()) ;
     refresh();
 }
 
