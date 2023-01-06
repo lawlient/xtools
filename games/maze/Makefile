@@ -1,2 +1,6 @@
 maze: maze.c
-	gcc maze.c -o maze -lncurses
+	gcc -g -Wall maze.c -o maze -lncurses
+
+
+clean:
+	rm log maze
