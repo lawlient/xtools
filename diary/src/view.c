@@ -4,10 +4,10 @@
 #include <ncurses.h>
 
 
-static const int COLNUM_MONTH = 20;
-static const int COLNUM_COL_GAP = 2;
-static const int COLNUM_SEASON = 3 * COLNUM_MONTH + 2 * COLNUM_COL_GAP;
-static const int YEAR_LINE = 3;
+#define COLNUM_MONTH     20
+#define COLNUM_COL_GAP   2
+#define COLNUM_SEASON   (3 * COLNUM_MONTH + 2 * COLNUM_COL_GAP)
+#define YEAR_LINE       3
 
 typedef int(*action)(int key);
 static action *actions;

@@ -19,7 +19,7 @@ add_executable(${biname} ${srcs})
 target_link_libraries(${biname} ${CURSES_LIBRARIES})
 
 set(CMAKE_INSTALL_PREFIX "/usr/local/")
-install(TARGETS ${biname} RUNTIME DESTINATION)
+install(TARGETS ${biname} RUNTIME DESTINATION bin)
 
 
 
