@@ -5,6 +5,7 @@
 void help() {
     printf("Usage: "PROC" -%s\n\n", optstring);
     printf("  -d, --date=STRING     specify date time\n\n");
+    printf("  -g, --generator       generate default file if not exist\n\n");
     printf("  -h, --help            show this help info and exit\n\n");
     printf("  -i, --editor          specify editor to open file\n");
     printf("                        cat will be used if no option\n");

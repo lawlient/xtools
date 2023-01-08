@@ -26,7 +26,23 @@ extern int parse_date_string(const char* date, struct tm *tm);
 
 
 
+typedef char *(*Name)();
+typedef void (*Template)();
 
+typedef struct Module_ {
+    Name name;
+    Template generator;
+} Module;
+
+
+extern const Module daily;
+extern const Module monthly;
+extern const Module yearly;
+
+extern const Module *d;
+
+
+extern struct tm date;
 
 
 #endif
