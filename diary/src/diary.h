@@ -23,6 +23,7 @@ extern void help();
 
 struct tm;
 extern int parse_date_string(const char* date, struct tm *tm);
+extern void template_suffix(FILE *f);
 
 
 

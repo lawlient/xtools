@@ -32,9 +32,7 @@ static void template() {
     fprintf(f, "## :hammer: 技能\n\n");
     fprintf(f, "## :family: 生活\n\n");
 
-    fprintf(f, "-------------------\n\n");
-    strftime(line, n, "%F %T", &date);
-    fprintf(f, "Date: *`%s`*\n", line);
+    template_suffix(f);
     fclose(f);
 }
 

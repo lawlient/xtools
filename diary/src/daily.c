@@ -38,9 +38,7 @@ static void template() {
     fprintf(f, "## :closed_book: 日记\n\n");
     fprintf(f, "无\n\n");
 
-    fprintf(f, "-------------------\n\n");
-    strftime(line, n, "%F %T", &date);
-    fprintf(f, "Date: *`%s`*\n", line);
+    template_suffix(f);
     fclose(f);
 }
 

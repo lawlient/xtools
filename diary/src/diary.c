@@ -79,6 +79,17 @@ int main(int argc, char *argv[]) {
 }
 
 
+void template_suffix(FILE *f) {
+    struct tm nowtm;
+    time_t now = time(0);
+    localtime_r(&now, &nowtm);
+
+    const int n = 30;
+    char line[n];
+    fprintf(f, "-------------------\n\n");
+    strftime(line, n, "%F %T", &nowtm);
+    fprintf(f, "Date: *`%s`*\n", line);
+}
 
 
 
