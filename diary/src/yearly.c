@@ -5,7 +5,7 @@
 static char filename[50];
 
 static char* name() {
-    strftime(filename, 50, "./%Y/%d.md", &date);
+    strftime(filename, 50, "./%Y/objectives.md", &date);
     return filename;
 }
 
