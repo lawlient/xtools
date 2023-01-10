@@ -1,12 +1,13 @@
 #include "diary.h"
 
 
-const char* optstring = "d:ghi::ovy";
+const char* optstring = "d:ghi::lovy";
 static struct option log_options[] = {
     {"date",       required_argument, 0,    'd'},
     {"help",       no_argument,       0,    'h'},
     {"editor",     optional_argument, 0,    'i'},
     {"generator",  no_argument,       0,    'g'},
+    {"list",       no_argument,       0,    'l'},
     {"objectives", no_argument,       0,    'o'},
     {"version",    no_argument,       0,    'v'},
     {"yearly",     no_argument,       0,    'y'},
@@ -44,6 +45,7 @@ int main(int argc, char *argv[]) {
             case 'g': generate = 1; break;
             case 'h': help();
             case 'i': editor = optarg ? optarg : "vim"; break;
+            case 'l': view();
             case 'o': d = &monthly; break;
             case 'v': version();
             case 'y': d = &yearly; break;
