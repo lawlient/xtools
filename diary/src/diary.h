@@ -46,6 +46,7 @@ extern const Module *d;
 
 
 extern struct tm date;
+extern const char* repository;
 
 
 #endif

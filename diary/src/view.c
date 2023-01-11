@@ -3,6 +3,8 @@
 #include <time.h>
 #include <ncurses.h>
 
+#include <errno.h> /* todo remove it */
+
 static const int COLNUM_MONTH = 20;
 static const int COLNUM_COL_GAP = 2;
 static const int COLNUM_SEASON = 3 * COLNUM_MONTH + 2 * COLNUM_COL_GAP;
@@ -10,7 +12,7 @@ static const int YEAR_LINE = 3;
 
 enum Color_ { FOCUS, EXIST, NONE };
 
-static const char * WEEK_en[] = { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa", NULL };
+static const char * WEEK_en[] = { " Su", " Mo", " Tu", " We", " Th", " Fr", " Sa", NULL };
 static const char * WEEK_cn[] = { "日", "一", "二", "三", "四", "五", "六", NULL };
 
 
@@ -18,10 +20,11 @@ static const char * WEEK_cn[] = { "日", "一", "二", "三", "四", "五", "六
 static void year();
 static void season(int s);
 static void month(int y, int x, int m);
+static void day(int y, int x, const struct tm*);
+static int daily_exist(const struct tm *date);
+
+
 static void initcrt();
-static int access_daily(const struct tm *date);
-
-
 
 
 
@@ -63,7 +66,7 @@ void initcrt() {
     keypad(stdscr, true);
 
     init_pair(FOCUS, COLOR_GREEN, COLOR_BLACK);
-    init_pair(EXIST, COLOR_BLACK, COLOR_WHITE);
+    init_pair(EXIST, COLOR_BLACK, COLOR_GREEN);
     init_pair(NONE, COLOR_WHITE, COLOR_BLACK);
 }
 
@@ -95,6 +98,40 @@ void month(int y, int x, int m) {
         mvaddstr(y, xx, WEEK_en[d]);
         xx += 3;
     }
+    y++;
+
+    tmp.tm_mday = 1;
+    time_t ttime = mktime(&tmp);
+
+    struct tm mtm;
+    int yy = 0;
+    for (int d = 0; d < 31; d++, ttime += 86400) {
+        gmtime_r(&ttime, &mtm);
+        if (mtm.tm_mon != m) break;
+        day(y + yy, x + 3 * (mtm.tm_wday), &mtm);
+        if (mtm.tm_wday == 6) yy++;
+    }
+}
+
+void day(int y, int x, const struct tm *tm) {
+    char mday[4];
+    strftime(mday, 4, " %e", tm);
+
+    if (daily_exist(tm)) {
+        attron(COLOR_PAIR(EXIST));
+        mvaddstr(y, x, mday);
+        attroff(COLOR_PAIR(EXIST));
+    } else {
+        attron(COLOR_PAIR(NONE));
+        mvaddstr(y, x, mday);
+        attroff(COLOR_PAIR(NONE));
+    }
+}
 
 
+int daily_exist(const struct tm *d) {
+    char filename[50];
+    strftime(filename, 50, "./%Y/%m/%d.md", d);
+    struct stat tmp;
+    return stat(filename, &tmp) == 0;
 }

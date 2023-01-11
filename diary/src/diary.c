@@ -16,6 +16,7 @@ static struct option log_options[] = {
 
 const char *editor = "cat";
 struct tm date;
+const char* repository = NULL;
 const Module *d;
 
 int main(int argc, char *argv[]) {
@@ -24,10 +25,19 @@ int main(int argc, char *argv[]) {
     time_t now = time(0);
     int generate = 0;
 
-    localtime_r(&now, &date); // now
-
+    /* set default time : now */
+    localtime_r(&now, &date);
     d = &daily;
+
+    /* change work directory under diary repository */
+    repository = getenv("DIARY");
+    if (!repository) {
+        printf("ENV DIARY doesn't exist\n");
+        return E_NON_EXIST;
+    }
+    chdir(repository);
     
+    /* parse command options */
     while (1) {
         int option_index = 0;
         c = getopt_long(argc, argv, optstring, log_options, &option_index);
@@ -52,14 +62,6 @@ int main(int argc, char *argv[]) {
             default: break;
         }
     };
-
-    
-    const char* repository = getenv("DIARY");
-    if (!repository) {
-        printf("ENV DIARY doesn't exist\n");
-        return E_NON_EXIST;
-    }
-    chdir(repository);
 
     struct stat fst;
     if (stat(d->name(), &fst)) {
