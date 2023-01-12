@@ -2,6 +2,7 @@
 #define DIARY_ERRCODE__
 
 
+#include <errno.h>
 
 
 #define E_OK                    0

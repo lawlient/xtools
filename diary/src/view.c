@@ -3,20 +3,28 @@
 #include <time.h>
 #include <ncurses.h>
 
-#include <errno.h> /* todo remove it */
 
 static const int COLNUM_MONTH = 20;
 static const int COLNUM_COL_GAP = 2;
 static const int COLNUM_SEASON = 3 * COLNUM_MONTH + 2 * COLNUM_COL_GAP;
 static const int YEAR_LINE = 3;
 
+typedef int(*action)(int key);
+static action *actions;
+static void load_actions();
+static void free_actions();
+
 enum Color_ { FOCUS, EXIST, NONE };
+enum Season { Spring, Summer, Autumn, Winter };
 
 static const char * WEEK_en[] = { " Su", " Mo", " Tu", " We", " Th", " Fr", " Sa", NULL };
-static const char * WEEK_cn[] = { "日", "一", "二", "三", "四", "五", "六", NULL };
+
+
+__attribute__((unused)) static const char * WEEK_cn[] = { "日", "一", "二", "三", "四", "五", "六", NULL };
 
 
 
+static void draw();
 static void year();
 static void season(int s);
 static void month(int y, int x, int m);
@@ -25,33 +33,33 @@ static int daily_exist(const struct tm *date);
 
 
 static void initcrt();
-
-
+static void exitcrt();
 
 
 void view() {
     initcrt();
 
-    clear();
-    year();
-    for (int s = 0; s < 4; s++) season(s);
-
-
-    refresh();
+    draw();
 
     int ch = 0;
     do {
-        if ((ch = getch()) == 'q') {
+        ch = getch();
+        if (ch == ERR) {
+            usleep(50 * 1000);
+            continue;
+        }
+
+        if (ch == 'q') {
             break;
         }
 
-        usleep(50 * 1000);
+        if (actions && actions[ch]) actions[ch](ch);
+
     } while (1);
 
-    endwin();
+    exitcrt();
     exit(0);
 }
-
 
 
 
@@ -68,19 +76,38 @@ void initcrt() {
     init_pair(FOCUS, COLOR_GREEN, COLOR_BLACK);
     init_pair(EXIST, COLOR_BLACK, COLOR_GREEN);
     init_pair(NONE, COLOR_WHITE, COLOR_BLACK);
+
+    load_actions();
+}
+
+void exitcrt() {
+    free_actions();
+    endwin();
+}
+
+void draw() {
+    clear();
+    year();
+    season(Spring);
+    season(Summer);
+    season(Autumn);
+    season(Winter);
+    refresh();
 }
 
 void year() {
     char line[COLNUM_SEASON];
     strftime(line, COLNUM_SEASON, "%Y", &date);
     attron(A_BOLD);
-    mvaddstr(YEAR_LINE, (COLS - COLNUM_SEASON)/2, line);
+    int x = (COLS - COLNUM_SEASON) / 2;
+    int xx = (COLNUM_SEASON - strlen(line)) / 2;
+    mvaddstr(YEAR_LINE, x + xx, line);
     attroff(A_BOLD);
 }
 
 static void season(int s) {
-    int y = YEAR_LINE + 1 + s * 10;
-    int x = 0;
+    int y = YEAR_LINE + 2 + s * 10;
+    int x = (COLS - COLNUM_SEASON) / 2;
     int m = s * 3;
     month(y, x, m); x += COLNUM_MONTH + COLNUM_COL_GAP; m++;
     month(y, x, m); x += COLNUM_MONTH + COLNUM_COL_GAP; m++;
@@ -109,7 +136,7 @@ void month(int y, int x, int m) {
         gmtime_r(&ttime, &mtm);
         if (mtm.tm_mon != m) break;
         day(y + yy, x + 3 * (mtm.tm_wday), &mtm);
-        if (mtm.tm_wday == 6) yy++;
+        if (mtm.tm_wday == 6 /* Sunday */) yy++;
     }
 }
 
@@ -135,3 +162,32 @@ int daily_exist(const struct tm *d) {
     struct stat tmp;
     return stat(filename, &tmp) == 0;
 }
+
+
+static int redraw(int key) { draw(); return 0; }
+
+static int last_year(int key) { 
+    date.tm_year--;
+    draw(); 
+    return 0;
+}
+
+static int next_year(int key) { 
+    date.tm_year++;
+    draw();
+    return 0;
+}
+
+void load_actions() {
+    free_actions();
+    actions = (action *)malloc(KEY_MAX * sizeof(action));
+    if (actions == NULL) {
+        return;
+    }
+
+    actions['n'] = next_year;
+    actions['p'] = last_year;
+    actions[KEY_RESIZE] = redraw;
+}
+
+void free_actions() { if (actions) free(actions); }
