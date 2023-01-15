@@ -4,7 +4,7 @@ project(diary)
 
 add_definitions("-Wall -g")
 
-set(biname diary)
+set(biname yraid)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR/src})
 
