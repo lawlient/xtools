@@ -30,6 +30,7 @@ static void season(int s);
 static void month(int y, int x, int m);
 static void day(int y, int x, const struct tm*);
 static int daily_exist(const struct tm *date);
+static int is_today(const struct tm *date);
 
 
 static void initcrt();
@@ -144,6 +145,8 @@ void day(int y, int x, const struct tm *tm) {
     char mday[4];
     strftime(mday, 4, " %e", tm);
 
+    if (is_today(tm)) attron(A_BOLD);
+
     if (daily_exist(tm)) {
         attron(COLOR_PAIR(EXIST));
         mvaddstr(y, x, mday);
@@ -153,6 +156,7 @@ void day(int y, int x, const struct tm *tm) {
         mvaddstr(y, x, mday);
         attroff(COLOR_PAIR(NONE));
     }
+    if (is_today(tm)) attroff(A_BOLD);
 }
 
 
@@ -163,6 +167,17 @@ int daily_exist(const struct tm *d) {
     return stat(filename, &tmp) == 0;
 }
 
+int is_today(const struct tm *date) {
+    time_t now = time(0);
+    struct tm today;
+    localtime_r(&now, &today);
+    if (today.tm_year == date->tm_year &&
+        today.tm_mon == date->tm_mon &&
+        today.tm_mday == date->tm_mday) {
+        return 1;
+    }
+    return 0;
+}
 
 static int redraw(int key) { draw(); return 0; }
 
@@ -178,6 +193,13 @@ static int next_year(int key) {
     return 0;
 }
 
+static int today(int key) {
+    time_t now = time(0);
+    localtime_r(&now, &date);
+    draw();
+    return 0;
+}
+
 void load_actions() {
     free_actions();
     actions = (action *)malloc(KEY_MAX * sizeof(action));
@@ -187,6 +209,7 @@ void load_actions() {
 
     actions['n'] = next_year;
     actions['p'] = last_year;
+    actions['0'] = today;
     actions[KEY_RESIZE] = redraw;
 }
 
