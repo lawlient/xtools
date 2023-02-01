@@ -74,8 +74,8 @@ void initcrt() {
 	cbreak();
     keypad(stdscr, true);
 
-    init_pair(FOCUS, COLOR_GREEN, COLOR_BLACK);
-    init_pair(EXIST, COLOR_BLACK, COLOR_GREEN);
+    init_pair(FOCUS, COLOR_RED, COLOR_BLACK);
+    init_pair(EXIST, COLOR_GREEN, COLOR_BLACK);
     init_pair(NONE, COLOR_WHITE, COLOR_BLACK);
 
     load_actions();
@@ -142,10 +142,11 @@ void month(int y, int x, int m) {
 }
 
 void day(int y, int x, const struct tm *tm) {
-    char mday[4];
-    strftime(mday, 4, " %e", tm);
+    mvaddstr(y, x++, " ");
+    char mday[3];
+    strftime(mday, 3, "%e", tm);
 
-    if (is_today(tm)) attron(A_BOLD);
+    if (is_today(tm)) attron(A_UNDERLINE);
 
     if (daily_exist(tm)) {
         attron(COLOR_PAIR(EXIST));
@@ -156,7 +157,7 @@ void day(int y, int x, const struct tm *tm) {
         mvaddstr(y, x, mday);
         attroff(COLOR_PAIR(NONE));
     }
-    if (is_today(tm)) attroff(A_BOLD);
+    if (is_today(tm)) attroff(A_UNDERLINE);
 }
 
 
