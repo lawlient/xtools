@@ -11,7 +11,16 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR/src})
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src srcs)
 
 # curses library
-set(CURSES_NEED_NCURSES TRUE)
+
+set(CURSES_NEED_WIDE true) # enable unicode
+
+SET(CURSES_LIBRARY_NAME "curses")
+SET(NCURSES_LIBRARY_NAME "ncurses")
+
+IF(CURSES_NEED_WIDE)
+    SET(CURSES_LIBRARY_NAME "cursesw")
+    SET(NCURSES_LIBRARY_NAME "ncursesw")
+ENDIF(CURSES_NEED_WIDE)
 find_package(Curses)
 include_directories(${CURSES_INCLUDE_DIR})
 

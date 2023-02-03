@@ -2,12 +2,15 @@
 
 #include <time.h>
 #include <ncurses.h>
+#include <locale.h>
 
 
 #define COLNUM_MONTH     20
 #define COLNUM_COL_GAP   2
 #define COLNUM_SEASON   (3 * COLNUM_MONTH + 2 * COLNUM_COL_GAP)
 #define YEAR_LINE       3
+#define MY_BIRTH_YEAR   1992
+#define AGE             (date.tm_year + 1900 - MY_BIRTH_YEAR)
 
 typedef int(*action)(int key);
 static action *actions;
@@ -17,12 +20,10 @@ static void free_actions();
 enum Color_ { FOCUS, EXIST, NONE };
 enum Season { Spring, Summer, Autumn, Winter };
 
-static const char * WEEK_en[] = { " Su", " Mo", " Tu", " We", " Th", " Fr", " Sa", NULL };
-
-
-__attribute__((unused)) static const char * WEEK_cn[] = { "日", "一", "二", "三", "四", "五", "六", NULL };
-
-
+static int CHINESE = 0; /* control show in english or chinese, default is english */
+static const char *WEEK_en[] = { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa", NULL };
+static const char *WEEK_cn[] = { "日", "一", "二", "三", "四", "五", "六", NULL };
+static const char *ZODIAC[] = { "🐭", "🐮", "🐯", "🐰", "🐲", "🐍", "🐴", "🐏", "🐵", "🐔", "🐶", "🐷", NULL};
 
 static void draw();
 static void year();
@@ -31,6 +32,7 @@ static void month(int y, int x, int m);
 static void day(int y, int x, const struct tm*);
 static int daily_exist(const struct tm *date);
 static int is_today(const struct tm *date);
+static const char *zodiac();
 
 
 static void initcrt();
@@ -38,6 +40,7 @@ static void exitcrt();
 
 
 void view() {
+    setlocale(LC_ALL, "");
     initcrt();
 
     draw();
@@ -54,7 +57,10 @@ void view() {
             break;
         }
 
-        if (actions && actions[ch]) actions[ch](ch);
+        if (actions && actions[ch]) {
+            actions[ch](ch);
+            draw();
+        }
 
     } while (1);
 
@@ -98,15 +104,18 @@ void draw() {
 
 void year() {
     char line[COLNUM_SEASON];
-    strftime(line, COLNUM_SEASON, "%Y", &date);
+    int size = 0;
+    size += strftime(line, COLNUM_SEASON, "%Y", &date);
+    size += snprintf(line+size, COLNUM_SEASON-size, "%s", zodiac());
+    size += snprintf(line+size, COLNUM_SEASON-size, " %d", AGE);
     attron(A_BOLD);
     int x = (COLS - COLNUM_SEASON) / 2;
     int xx = (COLNUM_SEASON - strlen(line)) / 2;
-    mvaddstr(YEAR_LINE, x + xx, line);
+    mvprintw(YEAR_LINE, x + xx, line);
     attroff(A_BOLD);
 }
 
-static void season(int s) {
+void season(int s) {
     int y = YEAR_LINE + 2 + s * 10;
     int x = (COLS - COLNUM_SEASON) / 2;
     int m = s * 3;
@@ -121,10 +130,11 @@ void month(int y, int x, int m) {
     tmp.tm_mon = m;
     strftime(line, COLNUM_MONTH, "%B", &tmp);
     mvaddstr(y++, x + (COLNUM_MONTH - strlen(line)) / 2, line);
-    int xx = x;
+    int xx = x + 1/* gap */;
     for (int d = 0; d < 7; d++) {
-        mvaddstr(y, xx, WEEK_en[d]);
-        xx += 3;
+        const char* w = CHINESE ? WEEK_cn[d] : WEEK_en[d];
+        mvprintw(y, xx, w);
+        xx += strlen(w) + (CHINESE ? 0 : 1)/* gap */;
     }
     y++;
 
@@ -180,24 +190,34 @@ int is_today(const struct tm *date) {
     return 0;
 }
 
-static int redraw(int key) { draw(); return 0; }
+const char *zodiac() {
+    int idx = 4;
+    int off = (date.tm_year + 1900 - 2012) % 12;
+    idx = (idx + off) % 12;
+    if (idx < 0) idx += 12;
+    return ZODIAC[idx];
+}
+
+static int redraw(int key) { return 0; }
 
 static int last_year(int key) { 
     date.tm_year--;
-    draw(); 
     return 0;
 }
 
 static int next_year(int key) { 
     date.tm_year++;
-    draw();
     return 0;
 }
 
 static int today(int key) {
     time_t now = time(0);
     localtime_r(&now, &date);
-    draw();
+    return 0;
+}
+
+static int lang(int key) {
+    CHINESE = ~CHINESE;
     return 0;
 }
 
@@ -211,6 +231,7 @@ void load_actions() {
     actions['n'] = next_year;
     actions['p'] = last_year;
     actions['0'] = today;
+    actions['l'] = lang;
     actions[KEY_RESIZE] = redraw;
 }
 
