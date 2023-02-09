@@ -23,14 +23,17 @@ static void template() {
     f = fopen(name(), "w");
     if (f == NULL) exit(E_CREAT_FAIL);
 
-    int n = 120;
+    int n = 120, size = 0;
     char line[n];
-    strftime(line, n, "%Y年%m月目标", &date);
-    fprintf(f, "# :dart: %s\n\n", line);
-    fprintf(f, "## :construction_worker: 工作\n\n");
-    fprintf(f, "## :book: 阅读\n\n");
-    fprintf(f, "## :hammer: 技能\n\n");
-    fprintf(f, "## :family: 生活\n\n");
+    size += strftime(line+size, n-size, "💯 %Y年度计划", &date);
+    size += snprintf(line+size, n-size, " %s", zodiac());
+    size += snprintf(line+size, n-size, " %d", AGE);
+    fprintf(f, "# %s\n\n", line);
+    fprintf(f, "🎯 核心目标\n\n");
+    fprintf(f, "## 👷 工作 %s\n\n", "40%");
+    fprintf(f, "## 📖 阅读 %s\n\n", "10%");
+    fprintf(f, "## 🔨 技能 %s\n\n", "40%");
+    fprintf(f, "## 👪 生活 %s\n\n", "10%");
 
     template_suffix(f);
     fclose(f);

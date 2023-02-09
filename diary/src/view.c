@@ -9,8 +9,6 @@
 #define COLNUM_COL_GAP   2
 #define COLNUM_SEASON   (3 * COLNUM_MONTH + 2 * COLNUM_COL_GAP)
 #define YEAR_LINE       3
-#define MY_BIRTH_YEAR   1992
-#define AGE             (date.tm_year + 1900 - MY_BIRTH_YEAR)
 
 typedef int(*action)(int key);
 static action *actions;
@@ -23,7 +21,6 @@ enum Season { Spring, Summer, Autumn, Winter };
 static int CHINESE = 0; /* control show in english or chinese, default is english */
 static const char *WEEK_en[] = { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa", NULL };
 static const char *WEEK_cn[] = { "日", "一", "二", "三", "四", "五", "六", NULL };
-static const char *ZODIAC[] = { "🐭", "🐮", "🐯", "🐰", "🐲", "🐍", "🐴", "🐏", "🐵", "🐔", "🐶", "🐷", NULL};
 
 static void draw();
 static void year();
@@ -32,7 +29,6 @@ static void month(int y, int x, int m);
 static void day(int y, int x, const struct tm*);
 static int daily_exist(const struct tm *date);
 static int is_today(const struct tm *date);
-static const char *zodiac();
 
 
 static void initcrt();
@@ -188,14 +184,6 @@ int is_today(const struct tm *date) {
         return 1;
     }
     return 0;
-}
-
-const char *zodiac() {
-    int idx = 4;
-    int off = (date.tm_year + 1900 - 2012) % 12;
-    idx = (idx + off) % 12;
-    if (idx < 0) idx += 12;
-    return ZODIAC[idx];
 }
 
 static int redraw(int key) { return 0; }

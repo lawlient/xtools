@@ -29,13 +29,13 @@ static void template() {
     int n = 120;
     char line[n];
     strftime(line, n, "%F %A", &date);
-    fprintf(f, "# :date: %s\n\n", line);
-    fprintf(f, "## :flags: 今日事件\n\n");
-    fprintf(f, "### :dart: 计划\n\n");
+    fprintf(f, "# 📅 %s\n\n", line);
+    fprintf(f, "## 🎏 今日事件\n\n");
+    fprintf(f, "### 🎯 计划\n\n");
     fprintf(f, "无\n\n");
-    fprintf(f, "### :skull: 变化\n\n");
+    fprintf(f, "### 💀 变化\n\n");
     fprintf(f, "无\n\n");
-    fprintf(f, "## :closed_book: 日记\n\n");
+    fprintf(f, "## 📕 日记\n\n");
     fprintf(f, "无\n\n");
 
     template_suffix(f);

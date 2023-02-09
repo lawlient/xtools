@@ -26,11 +26,11 @@ static void template() {
     int n = 120;
     char line[n];
     strftime(line, n, "%Y年%m月目标", &date);
-    fprintf(f, "# :dart: %s\n\n", line);
-    fprintf(f, "## :construction_worker: 工作\n\n");
-    fprintf(f, "## :book: 阅读\n\n");
-    fprintf(f, "## :hammer: 技能\n\n");
-    fprintf(f, "## :family: 生活\n\n");
+    fprintf(f, "# 🎯 %s\n\n", line);
+    fprintf(f, "## 👷 工作\n\n");
+    fprintf(f, "## 📖 阅读\n\n");
+    fprintf(f, "## 🔨 技能\n\n");
+    fprintf(f, "## 👪 生活\n\n");
 
     template_suffix(f);
     fclose(f);

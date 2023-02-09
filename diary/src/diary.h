@@ -15,6 +15,9 @@
 
 #include <sys/stat.h>
 
+#define MY_BIRTH_YEAR   1992
+#define AGE             (date.tm_year + 1900 - MY_BIRTH_YEAR)
+
 /* command line opetions string */
 extern const char* optstring;
 
@@ -62,5 +65,7 @@ extern struct tm date;
 /* absolute directory of diary repository, rely on ENV: DIARY */
 extern const char* repository;
 
+/* 获取date对应的中国生效emoji */
+extern const char *zodiac();
 
 #endif
