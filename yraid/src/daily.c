@@ -37,6 +37,10 @@ static void template() {
     fprintf(f, "无\n\n");
     fprintf(f, "## 📕 日记\n\n");
     fprintf(f, "无\n\n");
+    fprintf(f, "## ⏱️  时间统计表\n\n");
+    fprintf(f, "|    I    |    S    |    R    |    B    |    T    |\n");
+    fprintf(f, "|:-------:|:-------:|:-------:|:-------:|:-------:|\n");
+    fprintf(f, "|         |         |         |         |         |\n\n");
 
     template_suffix(f);
     fclose(f);

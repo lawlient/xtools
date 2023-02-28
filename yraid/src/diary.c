@@ -90,7 +90,7 @@ void template_suffix(FILE *f) {
 
     const int n = 30;
     char line[n];
-    fprintf(f, "-------------------\n\n");
+    fprintf(f, "\n-------------------\n\n");
     strftime(line, n, "%F %T", &nowtm);
     fprintf(f, "Date: *`%s`*\n", line);
 }
