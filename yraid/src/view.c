@@ -4,6 +4,8 @@
 #include <ncurses.h>
 #include <locale.h>
 
+#define ENTER   13
+#define ESC     27
 
 #define COLNUM_MONTH     20                                     // width of month
 #define YEAR_TITLE_COL_GAP   2                                  // width of gap between year title and spring
@@ -369,6 +371,40 @@ static int next_day(int key) {
     return 0;
 }
 
+/* 存在缺陷，当文件行数超过屏幕高度时，未实现翻页效果
+ * 目前单日文档通常不超过一屏高度
+ * TODO： 实现翻页(更强的，可以实现一个内置编辑器, 类似vim) */
+static int preview(int key) {
+    if (!daily_exist(&date)) return 0;
+
+    char filename[BUFSIZ];
+    int size = strftime(filename, BUFSIZ, "./%Y/%m/%d.md", &date);
+    if (0 == size) return 0;
+    FILE* fin = fopen(filename, "r");
+    if (fin == NULL) return 0;
+
+    clear();
+    char line[BUFSIZ];
+    int y = 0;
+    while (!feof(fin)) {
+        memset(line, 0, BUFSIZ);
+        fgets(line, BUFSIZ, fin);
+        mvprintw(y++, 0, line);
+    }
+    fclose(fin);
+    mvprintw(LINES - 1, 0, "Escape with 'q'");
+    refresh();
+
+    int k;
+    do {
+        k = getch();
+    } while (k != 'q');
+    
+    return 0;
+}
+
+
+
 void load_actions() {
     free_actions();
     actions = (action *)malloc(KEY_MAX * sizeof(action));
@@ -376,14 +412,15 @@ void load_actions() {
         return;
     }
 
-    actions['n'] = next_year;
-    actions['p'] = last_year;
-    actions['0'] = today;
-    actions['l'] = lang;
+    actions['n']        = next_year;
+    actions['p']        = last_year;
+    actions['0']        = today;
+    actions['l']        = lang;
     actions[KEY_UP]     = up;
     actions[KEY_DOWN]   = down;
     actions[KEY_LEFT]   = last_day;
     actions[KEY_RIGHT]  = next_day;
+    actions[ENTER]      = preview;
     actions[KEY_RESIZE] = redraw;
 }
 
