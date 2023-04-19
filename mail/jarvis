@@ -3,7 +3,10 @@
 CONFIG_PREFIX=$HOME/.config/jarvis
 CONFIG=$CONFIG_PREFIX/id
 SECRET=$CONFIG_PREFIX/secret.gpg
+LOG=$CONFIG_PREFIX/log
 
+echo "" >> $LOG
+echo "----------     $0 $@    ----------" >> $LOG
 
 function usage {
     echo "Usage : $(basename $0) [hcgt] [-m mailfile]"
@@ -59,6 +62,7 @@ do
     esac
 done
 
+
 topic=`grep TOPIC $CONFIG | awk -F '=' '{print $2}'`
 sender=`grep SENDER $CONFIG | awk -F '=' '{print $2}'`
 stmp_addr=`grep STMP_ADDR $CONFIG | awk -F '=' '{print $2}'`
@@ -67,16 +71,19 @@ receiver=`grep RECEIVER $CONFIG | awk -F '=' '{print $2}'`
 [[ -z "$TOPIC" ]] && TOPIC=$topic
 
 if [[ -f "$MSG" ]]; then
-    gpg -dq $SECRET | sshpass sendEmail -u $TOPIC -f $sender -s $stmp_addr -t $receiver -xu $sender -o tls=auto message-file="$MSG"
+    gpg -dq $SECRET | sshpass sendEmail -u $TOPIC -f $sender -s $stmp_addr -t $receiver -xu $sender -o tls=auto message-file="$MSG" >> $LOG
     exit
 fi
 
-[[ ! -z $MSG ]] && echo "$MSG doesn't exist!" && exit
+if [[ ! -z $MSG ]]; then
+    gpg -dq $SECRET | sshpass sendEmail -u $TOPIC -f $sender -s $stmp_addr -t $receiver -xu $sender -m "$MSG" >> $LOG
+    exit
+fi
 
 TMP=`mktemp` || exit 1
 
 cat > $TMP # read from stdin
 
-gpg -dq $SECRET | sshpass sendEmail -u $TOPIC -f $sender -s $stmp_addr -t $receiver -xu $sender -o tls=auto message-file="$TMP"
+gpg -dq $SECRET | sshpass sendEmail -u $TOPIC -f $sender -s $stmp_addr -t $receiver -xu $sender -o tls=auto message-file="$TMP" >> $LOG
 
 trap 'rm -f "$TMP"' EXIT

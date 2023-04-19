@@ -44,11 +44,15 @@ sudo apt install sshpass sendemail
 
 ## 使用
 
-1. 指定邮件文件并发送
+1. 直接发送文本(前提是字符串非文件)
+
+`jarvis -m "hello world"`
+
+2. 指定邮件文件并发送(若文件不存在会当做情况1处理）
 
 `jarvis -m mailfile`
 
-2. 通过管道重定向标准输入进行发送
+3. 通过管道重定向标准输入进行发送
 
 `echo <email body> | jarvis`
 
@@ -57,3 +61,31 @@ sudo apt install sshpass sendemail
 `jarvis`
 
 编辑完成后`CTRL + d`结束编辑并发送。
+
+
+
+## 其他
+
+gpg-agent可以缓存口令时长，若出现每次需要输入口令，可以修改agent配置。
+
+1. 编辑配置文件`~/.gnupg/gpg-agent.conf`
+
+修改如下配置：
+
+```
+default-cache-ttl 604800
+max-cache-ttl 604800
+```
+
+2. 重新载入agent
+
+`gpgconf --reload gpg-agent`
+
+或重启agent
+
+`gpgconf kill gpg-agent && gpgconf --launch gpg-agent`
+
+
+----------
+
+参考[官方文档](https://www.gnupg.org/documentation/manuals/gnupg/Agent-Options.html)
