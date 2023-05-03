@@ -19,5 +19,5 @@ bname=$(basename $1 .md)
 # echo $bname
 
 # it will be better format for checkbox if pandoc version is 2.6 or higher
-pandoc --embed-resources --standalone --metadata title="$bname" --css /usr/local/share/pandoc/css/buttomdown.css -f markdown -t html -o $bname.html $1
+pandoc --embed-resources --standalone --metadata title="$bname" --css /usr/local/share/pandoc/css/html.css -f markdown -t html -o $bname.html $1
 

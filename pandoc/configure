@@ -12,14 +12,14 @@ if [[ 0 != $? ]];then
 
     rm /tmp/pandoc -rf
 fi
-pandoc --version | head
+pandoc --version | head -n1
 
 # install tex relative
-apt install texlive texlive-latex-extra texlive-latex-recommended texlive-xetex texlive-lang-chinese
+apt install texlive texlive-latex-extra texlive-latex-recommended texlive-xetex texlive-lang-chinese > /dev/null
 
 
 # install font
-apt install fontconfig && fc-list :lang=zh
+apt install fontconfig && fc-list :lang=zh > /dev/null
 
 # since the size of font file is kind of huge，didn't find a good way to restore it
 # you can download it from network or 
