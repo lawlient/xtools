@@ -3,21 +3,45 @@
 # this is bash script for converting markdown file to html file
 # the target file will be generated in current dir
 
+CSS_DIR="/usr/local/share/pandoc/css/"
+
+function usage {
+    echo "$(basename $0) [cfhl] "
+    echo "    -f filename, to specify markdown file"
+    echo "    -c number (start from 1), to specify css file, default is pandoc.css"
+    echo "    -h to print this help info"
+    echo "    -l to list all css files"
+
+    exit 0
+}
+
 if [[ $# < 1 ]];then
-    echo "usage: $(basename $0) filename"
-    exit 0
+    usage
 fi
 
-if [ ! -f "$1" ]; then
-    echo $1 " is not a file"
-    echo ""
-    echo "usage: $0 filename"
-    exit 0
+
+CSS_FILE="pandoc.css"
+
+while getopts c:f:hl opt
+do
+    case "${opt}" in
+    c) CSS_FILE=`ls -l /usr/local/share/pandoc/css/ | grep css | awk '{print $NF}' | sed -n "${OPTARG}p"`;;
+    f) mdfile=${OPTARG};;
+    l) ls -l /usr/local/share/pandoc/css/ | grep css | awk '{print $NF}'; exit;;
+    h) usage;;
+    esac
+done
+
+if [ ! -f "${mdfile}" ]; then
+    echo "error: can't find file :${mdfile}"
+    exit
 fi
 
-bname=$(basename $1 .md)
+
+bname=$(basename ${mdfile} .md)
 # echo $bname
 
+
 # it will be better format for checkbox if pandoc version is 2.6 or higher
-pandoc --embed-resources --standalone --metadata title="$bname" --css /usr/local/share/pandoc/css/html.css -f markdown -t html -o $bname.html $1
+pandoc --embed-resources --standalone --metadata title="$bname" --css "$CSS_DIR$CSS_FILE" -f markdown -t html -o $bname.html ${mdfile}
 

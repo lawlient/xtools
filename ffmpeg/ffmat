@@ -1,0 +1,42 @@
+#! /usr/bin/bash
+
+strategy=( "v2aac" "aac2mp3" "v2mp3")
+
+s=0     # index of strategy
+f=""    # input file
+
+function usage() {
+    echo "Usage: basename($0) -i filename -s N"
+
+    echo "-----------------------------------"
+    for i in ${!strategy[@]}; do
+        echo "$i :  ${strategy[$i]}"
+    done
+}
+
+
+while getopts hi:s: opt
+do
+    case "${opt}" in
+    h) usage && exit 0;;
+    i) f=${OPTARG};;
+    s) s=${OPTARG};;
+    esac
+done
+
+[[ -z "$f" ]] && echo "missing input file, please check." && exit 0
+
+
+name=${f%.*}
+
+case "$s" in
+0) ffmpeg -i $f -acodec copy -vn $name.aac;;
+1) ffmpeg -i $f -acodec libmp3lame $name.mp3;;
+2) ffmpeg -i $f -acodec copy -vn $name.aac &&  ffmpeg -i $name.aac -acodec libmp3lame $name.mp3 && rm $name.aac;;
+esac
+
+
+
+
+
+
