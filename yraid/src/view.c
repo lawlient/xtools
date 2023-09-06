@@ -66,6 +66,7 @@ void view() {
     do {
         ch = getch();
         if (ch == ERR) {
+            usleep(200*1000); // low cpu
             continue;
         }
 
@@ -115,7 +116,7 @@ void exitcrt() {
 }
 
 void draw() {
-    clear();
+    erase(); // screen blink when I use `clear()`
     year();
     season(Spring);
     season(Summer);
@@ -135,7 +136,7 @@ void year() {
     attron(A_BOLD);
     int x = (COLS - COLNUM_SEASON) / 2;
     int xx = (COLNUM_SEASON - strlen(line)) / 2;
-    mvprintw(YEAR_LINE, x + xx, line);
+    mvprintw(YEAR_LINE, x + xx, "%s", line);
     attroff(A_BOLD);
 }
 
@@ -157,7 +158,7 @@ void month(int y, int x, int m) {
     int xx = x + 1/* gap */;
     for (int d = 0; d < 7; d++) {
         const char* w = CHINESE ? WEEK_cn[d] : WEEK_en[d];
-        mvprintw(y, xx, w);
+        mvprintw(y, xx, "%s", w);
         xx += strlen(w) + (CHINESE ? 0 : 1)/* gap */;
     }
     y++;
@@ -389,7 +390,7 @@ static int preview(int key) {
     while (!feof(fin)) {
         memset(line, 0, BUFSIZ);
         fgets(line, BUFSIZ, fin);
-        mvprintw(y++, 0, line);
+        mvprintw(y++, 0, "%s", line);
     }
     fclose(fin);
     mvprintw(LINES - 1, 0, "Escape with 'q'");
