@@ -7,4 +7,5 @@ some personal tools
 3. [mail](mail/README.md)
 4. [pandoc](pandoc/README.md)
 5. [yraid](yraid/README.md)
-6. [gpg](gpg/README.md)
+6. [secret](gpg/README.md)
+7. [ffmat](ffmpeg/README.md)
