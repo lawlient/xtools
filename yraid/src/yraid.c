@@ -1,4 +1,4 @@
-#include "diary.h"
+#include "yraid.h"
 
 
 const char* optstring = "d:ghi::lovy";

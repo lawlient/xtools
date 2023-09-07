@@ -1,4 +1,4 @@
-#include "diary.h"
+#include "yraid.h"
 
 #include <time.h>
 #include <ncurses.h>

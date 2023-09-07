@@ -1,4 +1,4 @@
-#include "diary.h"
+#include "yraid.h"
 
 
 static const char *ZODIAC[] = { "🐭", "🐮", "🐯", "🐰", "🐲", "🐍", "🐴", "🐏", "🐵", "🐔", "🐶", "🐷", NULL};
