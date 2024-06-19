@@ -1,8 +1,9 @@
 #include "yraid.h"
 
 
-const char* optstring = "d:ghi::lovy";
+const char* optstring = "cd:ghi::lovy";
 static struct option log_options[] = {
+    {"config",     optional_argument, 0,    'c'},
     {"date",       required_argument, 0,    'd'},
     {"help",       no_argument,       0,    'h'},
     {"editor",     optional_argument, 0,    'i'},
@@ -16,7 +17,6 @@ static struct option log_options[] = {
 
 const char *editor = "cat";
 struct tm date;
-const char* repository = NULL;
 const Module *d;
 
 int main(int argc, char *argv[]) {
@@ -29,14 +29,6 @@ int main(int argc, char *argv[]) {
     localtime_r(&now, &date);
     d = &daily;
 
-    /* change work directory under diary repository */
-    repository = getenv("DIARY");
-    if (!repository) {
-        printf("ENV DIARY doesn't exist\n");
-        return E_NON_EXIST;
-    }
-    chdir(repository);
-    
     /* parse command options */
     while (1) {
         int option_index = 0;
@@ -44,6 +36,7 @@ int main(int argc, char *argv[]) {
         if (-1 == c) break;
 
         switch (c) {
+            case 'c': config(argc-2, &argv[2]);
             case 'd': {
                 err = parse_date_string(optarg, &date);
                 if (err) {
@@ -63,11 +56,25 @@ int main(int argc, char *argv[]) {
         }
     };
 
+    parse_config();
+    /* change work directory under repository */
+    const char* repository = get_config(CFG_REPOSITORY);
+    if (!repository) {
+        printf("you should set data path first\n");
+        printf("try: %s -c set repository `your data path`\n", getenv("_"));
+        return ENONET;
+    }
+    if (chdir(repository)) {
+        printf("data path: %s error\n", repository);
+        printf("try: %s -c set repository `your data path`\n", getenv("_"));
+        return ENONET;
+    }
+
     struct stat fst;
     if (stat(d->name(), &fst)) {
         if (!generate) {
             printf("cannot found diary at %s %s\n", repository, d->name());
-            return E_NON_EXIST;
+            return ENONET;
         }
 
         d->generator();

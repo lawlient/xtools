@@ -8,11 +8,11 @@
 #define ESC     27
 
 #define COLNUM_MONTH     20                                     // width of month
-#define YEAR_TITLE_COL_GAP   2                                  // width of gap between year title and spring
+#define YEAR_TITLE_COL_GAP   2                                  // width of gap between year title
 #define MONTH_COL_GAP   2                                       // width of gap between month
-#define COLNUM_SEASON   (3 * COLNUM_MONTH + 2 * MONTH_COL_GAP)  // width of season
-#define YEAR_LINE       3                                       // start linenum of year title
-#define HEIGTH_MONTH    10                                      // heigth of month
+#define COLNUM_QUARTER (3 * COLNUM_MONTH + 2 * MONTH_COL_GAP)   // width of quarter
+#define YEAR_LINE 3                                             // start linenum of year title
+#define HEIGTH_MONTH 10                                         // heigth of month
 
 typedef struct Position_ Position;
 struct Position_ {
@@ -22,43 +22,48 @@ struct Position_ {
     0, 0
 };
 
-typedef int(*action)(int key);
+typedef int (*action)(int key);
 static action *actions;
 static void load_actions();
 static void free_actions();
 
-enum Color_ { FOCUS = 1, EXIST, NONE };
-enum Season { Spring, Summer, Autumn, Winter };
+enum Color_ {
+    FOCUS = 1,
+    EXIST,
+    NONE
+};
 
 static int CHINESE = 0; /* control show in english or chinese, default is english */
-static const char *WEEK_en[] = { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa", NULL };
-static const char *WEEK_cn[] = { "日", "一", "二", "三", "四", "五", "六", NULL };
+static const char *WEEK_en[] = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa", NULL};
+static const char *WEEK_cn[] = {"日", "一", "二", "三", "四", "五", "六", NULL};
 
 static void draw();
 static void year();
-static void season(int s);
+static void quarter(int s);
 static void month(int y, int x, int m);
-static void day(int y, int x, const struct tm*);
+static void day(int y, int x, const struct tm *);
 static int daily_exist(const struct tm *date);
 static int is_today(const struct tm *date);
 static void locate();
-static void init_focus();
 static int is_focus(int y, int x);
 static int isLeapYear(int year);
 static int get_max_dayofmonth(const struct tm *date);
 
-static struct tm getDate(int year, int month, int week, int sort); 
-
+static struct tm getDate(int year, int month, int week, int sort);
 
 static void initcrt();
 static void exitcrt();
 
-
 void view() {
+    parse_config();
+    /* change work directory if repository is setted */
+    const char* repository = get_config(CFG_REPOSITORY);
+    if (repository) chdir(repository);
+
     setlocale(LC_ALL, "");
     initcrt();
 
-    init_focus();
+    locate();
 
     draw();
 
@@ -66,7 +71,7 @@ void view() {
     do {
         ch = getch();
         if (ch == ERR) {
-            usleep(200*1000); // low cpu
+            usleep(200 * 1000); // low cpu
             continue;
         }
 
@@ -85,8 +90,6 @@ void view() {
     exit(0);
 }
 
-
-
 void initcrt() {
     initscr();
     start_color();
@@ -94,13 +97,13 @@ void initcrt() {
     nonl();
     nodelay(stdscr, true);
     curs_set(0);
-	cbreak();
+    cbreak();
     keypad(stdscr, true);
 
 #if NCURSES_MOUSE_VERSION > 1
-      mousemask(BUTTON1_RELEASED | BUTTON4_PRESSED | BUTTON5_PRESSED, NULL);
+    mousemask(BUTTON1_RELEASED | BUTTON4_PRESSED | BUTTON5_PRESSED, NULL);
 #else
-      mousemask(BUTTON1_RELEASED, NULL);
+    mousemask(BUTTON1_RELEASED, NULL);
 #endif
 
     init_pair(FOCUS, COLOR_RED, COLOR_WHITE);
@@ -118,31 +121,30 @@ void exitcrt() {
 void draw() {
     erase(); // screen blink when I use `clear()`
     year();
-    season(Spring);
-    season(Summer);
-    season(Autumn);
-    season(Winter);
+    quarter(0);
+    quarter(1);
+    quarter(2);
+    quarter(3);
     refresh();
 }
 
-void init_focus() { locate(); }
 
 void year() {
-    char line[COLNUM_SEASON];
+    char line[COLNUM_QUARTER];
     int size = 0;
-    size += strftime(line+size, COLNUM_SEASON-size, "%Y", &date);
-    size += snprintf(line+size, COLNUM_SEASON-size, "%s", zodiac());
-    size += snprintf(line+size, COLNUM_SEASON-size, " %d", AGE);
+    size += snprintf(line+size, COLNUM_QUARTER-size, "%s ", zodiac());
+    size += strftime(line+size, COLNUM_QUARTER-size, " %Y ", &date);
+    size += snprintf(line+size, COLNUM_QUARTER-size, "%s", age());
     attron(A_BOLD);
-    int x = (COLS - COLNUM_SEASON) / 2;
-    int xx = (COLNUM_SEASON - strlen(line)) / 2;
+    int x = (COLS - COLNUM_QUARTER) / 2;
+    int xx = (COLNUM_QUARTER - strlen(line)) / 2;
     mvprintw(YEAR_LINE, x + xx, "%s", line);
     attroff(A_BOLD);
 }
 
-void season(int s) {
+void quarter(int s) {
     int y = YEAR_LINE + YEAR_TITLE_COL_GAP + s * HEIGTH_MONTH;
-    int x = (COLS - COLNUM_SEASON) / 2;
+    int x = (COLS - COLNUM_QUARTER) / 2;
     int m = s * 3;
     month(y, x, m); x += COLNUM_MONTH + MONTH_COL_GAP; m++;
     month(y, x, m); x += COLNUM_MONTH + MONTH_COL_GAP; m++;
@@ -223,9 +225,9 @@ int is_today(const struct tm *date) {
 }
 
 void locate() {
-    int season = date.tm_mon / 3;
-    focus.y = YEAR_LINE +  YEAR_TITLE_COL_GAP + season * HEIGTH_MONTH + 2/* month & weekname */;
-    focus.x = (COLS - COLNUM_SEASON) / 2 + (date.tm_mon % 3) * (COLNUM_MONTH + MONTH_COL_GAP);
+    int quarter = date.tm_mon / 3;
+    focus.y = YEAR_LINE +  YEAR_TITLE_COL_GAP + quarter * HEIGTH_MONTH + 2/* month & weekname */;
+    focus.x = (COLS - COLNUM_QUARTER) / 2 + (date.tm_mon % 3) * (COLNUM_MONTH + MONTH_COL_GAP);
     focus.x += (date.tm_wday % 7) * 3;
 
     int mday = date.tm_mday;
@@ -250,7 +252,6 @@ int get_max_dayofmonth(const struct tm *d) {
     return MAX_DAY_IN_YEAR[d->tm_mon];
 }
 
-// 判断是否为闰年
 int isLeapYear(int year) {
     if (year % 4 == 0 && year % 100 != 0) {
         return 1;
@@ -372,35 +373,79 @@ static int next_day(int key) {
     return 0;
 }
 
-/* 存在缺陷，当文件行数超过屏幕高度时，未实现翻页效果
- * 目前单日文档通常不超过一屏高度
- * TODO： 实现翻页(更强的，可以实现一个内置编辑器, 类似vim) */
 static int preview(int key) {
     if (!daily_exist(&date)) return 0;
 
     char filename[BUFSIZ];
     int size = strftime(filename, BUFSIZ, "./%Y/%m/%d.md", &date);
     if (0 == size) return 0;
-    FILE* fin = fopen(filename, "r");
-    if (fin == NULL) return 0;
 
-    clear();
-    char line[BUFSIZ];
+    int fd = open(filename, O_RDONLY);
+    if (fd <= 0) return 0;
+
+    /* FIX: file size is large than 2 pages, content will be overflow */
+    size_t len = 2 * getpagesize();
+    char* map = mmap(0, len, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (!map) return 0;
+
+    int x = 0;
     int y = 0;
-    while (!feof(fin)) {
-        memset(line, 0, BUFSIZ);
-        fgets(line, BUFSIZ, fin);
-        mvprintw(y++, 0, "%s", line);
-    }
-    fclose(fin);
-    mvprintw(LINES - 1, 0, "Escape with 'q'");
-    refresh();
+    int ln = 0;
+    char line[BUFSIZ];
 
-    int k;
-    do {
-        k = getch();
-    } while (k != 'q');
+    while (1) {
+        erase();
+        y = ln < 0 ? ln : 0;
+        for (int i = 0; i < len && map[i]; i++) {
+            if (map[i] == '\n') {
+                mvprintw(y, 0, "%s", line);
+                x = 0;
+                y++;
+                memset(line, 0, BUFSIZ);
+                continue;
+            }
+            line[x++] = map[i];
+        }
+        mvprintw(LINES - 1, 0, "Escape with 'q'");
+        refresh();
+
+
+        int k;
+        int quit = 0;
+        int refresh = 0;
+        do {
+            k = getch();
+            switch (k) {
+                case ERR: usleep(200 * 1000); break;
+                case 'q':
+                case ESC: quit = 1; break;
+                case 'j': ln--; refresh = 1; break;
+                case 'k': {
+                    if (ln < 0) {
+                        ln++;
+                        refresh = 1;
+                    }
+                    break;
+                }
+                case 'u': {
+                    if (ln < 0) {
+                        ln += 5;
+                        if (ln > 0) ln = 0;
+                        refresh = 1;
+                    }
+                    break;
+                }
+                case 'd': ln -= 5; refresh = 1; break;
+                default: break;
+            } 
+            if (refresh || quit) break;
+        } while (1);
+
+        if (quit) break;
+    }
     
+    munmap(map, len);
+    close(fd);
     return 0;
 }
 

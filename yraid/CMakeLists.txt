@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
-
 project(diary)
+
+add_definitions(-DVERSION="1.0.0")
+add_definitions(-DEMAIL="jiuanx2011@163.com")
 
 add_definitions("-Wall -g")
 

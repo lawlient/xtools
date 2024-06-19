@@ -27,7 +27,7 @@ static void template() {
     char line[n];
     size += strftime(line+size, n-size, "💯 %Y年度计划", &date);
     size += snprintf(line+size, n-size, " %s", zodiac());
-    size += snprintf(line+size, n-size, " %d", AGE);
+    size += snprintf(line+size, n-size, " %s", age());
     fprintf(f, "# %s\n\n", line);
     fprintf(f, "🎯 核心目标\n\n");
     fprintf(f, "## 👷 工作 %s\n\n", "40%");
