@@ -1,6 +1,7 @@
 #ifndef DIARY_HEADER__
 #define DIARY_HEADER__
 
+#include "template/template.h"
 
 #include "errcode.h"
 
@@ -26,6 +27,7 @@
 #define CFG_REPOSITORY "repository"
 #define CFG_BIRTHDAY "birthday"
 #define CFG_EDITOR "editor"
+const char* configfilepath();
 const char* get_config(const char* key);
 void parse_config();
 
@@ -49,25 +51,7 @@ extern void view();
  * eg: "yesterday, tomorrow, +2 day, -2 days, and so on */
 extern int parse_date_string(const char* date, struct tm *tm);
 
-/* append diary common suffix while generating from template */
-extern void template_suffix(FILE *f);
-
-
-typedef char *(*Name)();
-typedef void (*Template)();
-
-typedef struct Module_ {
-    Name name;
-    Template generator;
-} Module;
-
-
-extern const Module daily;
-extern const Module monthly;
-extern const Module yearly;
-
-extern const Module *d;
-
+extern void workdir(int exit);
 
 /* global variable, the date & time parse from command line option -d
  * the default value is now if there is no option -d */

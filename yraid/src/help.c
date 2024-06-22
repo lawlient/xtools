@@ -10,13 +10,12 @@ void help() {
     printf("                        - `birthday` to specific your brithday\n");
     printf("                        - `editor` to specific high priority tool to open file\n");
     printf("  -d, --date=STRING     specify date time\n");
+    printf("  -e, --editor          specify editor to open file\n");
     printf("  -g, --generator       generate default file if not exist\n");
     printf("  -h, --help            show this help info and exit\n");
-    printf("  -i, --editor          specify editor to open file\n");
-    printf("                        cat will be used if no option\n");
-    printf("                        vim is default editor if there is no arg follow -i\n");
-    printf("  -l, --list            show diary update view\n");
-    printf("  -o, --objectives      target file is monthly objectives\n");
+    printf("  -l, --list            calendar view\n");
+    printf("  -m, --monthly         target file is monthly objectives\n");
+    printf("  -t, --template        \n");
     printf("  -v, --version         show version info and exit\n");
     printf("  -y, --yearly          target file is yearly objectives\n");
     exit(0);

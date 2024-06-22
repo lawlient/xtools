@@ -1,15 +1,16 @@
 #include "yraid.h"
 
 
-const char* optstring = "cd:ghi::lovy";
+const char* optstring = "c::d:e::ghlmt::vy";
 static struct option log_options[] = {
     {"config",     optional_argument, 0,    'c'},
     {"date",       required_argument, 0,    'd'},
+    {"editor",     optional_argument, 0,    'e'},
     {"help",       no_argument,       0,    'h'},
-    {"editor",     optional_argument, 0,    'i'},
     {"generator",  no_argument,       0,    'g'},
     {"list",       no_argument,       0,    'l'},
-    {"objectives", no_argument,       0,    'o'},
+    {"monthly",    no_argument,       0,    'm'},
+    {"template",   optional_argument, 0,    't'},
     {"version",    no_argument,       0,    'v'},
     {"yearly",     no_argument,       0,    'y'},
     {0,            0,                 0,     0 },
@@ -17,17 +18,15 @@ static struct option log_options[] = {
 
 const char *editor = "cat";
 struct tm date;
-const Module *d;
 
 int main(int argc, char *argv[]) {
     int c;
     int err = E_OK;
-    time_t now = time(0);
     int generate = 0;
 
     /* set default time : now */
+    time_t now = time(0);
     localtime_r(&now, &date);
-    d = &daily;
 
     /* parse command options */
     while (1) {
@@ -47,60 +46,51 @@ int main(int argc, char *argv[]) {
             }
             case 'g': generate = 1; break;
             case 'h': help();
-            case 'i': editor = optarg ? optarg : "vim"; break;
+            case 'e': editor = optarg ? optarg : get_config(CFG_EDITOR); break;
             case 'l': view();
-            case 'o': d = &monthly; break;
+            case 'm': t = &monthly; break;
+            case 't': template(argc-2, &argv[2]); break;
             case 'v': version();
-            case 'y': d = &yearly; break;
+            case 'y': t = &yearly; break;
             default: break;
         }
     };
 
     parse_config();
-    /* change work directory under repository */
-    const char* repository = get_config(CFG_REPOSITORY);
-    if (!repository) {
-        printf("you should set data path first\n");
-        printf("try: %s -c set repository `your data path`\n", getenv("_"));
-        return ENONET;
-    }
-    if (chdir(repository)) {
-        printf("data path: %s error\n", repository);
-        printf("try: %s -c set repository `your data path`\n", getenv("_"));
-        return ENONET;
-    }
+    workdir(1);
 
-    struct stat fst;
-    if (stat(d->name(), &fst)) {
-        if (!generate) {
-            printf("cannot found diary at %s %s\n", repository, d->name());
+    if (generate) {
+        if (t->generate(t, &date)) {
             return ENONET;
         }
+    }
 
-        d->generator();
+    if (editor == NULL) {
+        printf("use `%s -c editor xxx` to config your default editor\n", PROC);
+        printf("or try `%s -e xxx` to specific one off editor\n", PROC);
+        exit(0);
     }
 
     int CMD_LEN = 100;
     char cmd[CMD_LEN];
     strncpy(cmd, editor, CMD_LEN);
     strncat(cmd, " ", CMD_LEN);
-    strncat(cmd, d->name(), CMD_LEN);
+    strncat(cmd, t->targetname(&date), CMD_LEN);
     system(cmd);
     return err;
 }
 
-
-void template_suffix(FILE *f) {
-    struct tm nowtm;
-    time_t now = time(0);
-    localtime_r(&now, &nowtm);
-
-    const int n = 30;
-    char line[n];
-    fprintf(f, "\n-------------------\n\n");
-    strftime(line, n, "%F %T", &nowtm);
-    fprintf(f, "Date: *`%s`*\n", line);
+void workdir(int exited) {
+    /* change work directory under repository */
+    const char* repository = get_config(CFG_REPOSITORY);
+    if (!repository) {
+        printf("you should set data path first\n");
+        printf("try: %s -c set repository `your data path`\n", getenv("_"));
+        if (exited) exit(ENONET);
+    }
+    if (chdir(repository)) {
+        printf("data path: %s error\n", repository);
+        printf("try: %s -c set repository `your data path`\n", getenv("_"));
+        if (exited) exit(ENONET);
+    }
 }
-
-
-

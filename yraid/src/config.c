@@ -14,7 +14,6 @@ typedef struct Token_ {
 
 static char *readline(int fd);
 static Token getToken(char* line, int idx);
-static const char* pathname();
 static const char* filename();
 static int open_config_file();
 static void print_config();
@@ -109,7 +108,7 @@ const char* age() {
       4. line format is `key=value`
 */
 
-const char* pathname() {
+const char* configfilepath() {
     static char path[128];
     memset(path, 0, strlen(path));
     snprintf(path, 128, "%s/.config/%s", ENV_HOME, PROC);
@@ -119,7 +118,7 @@ const char* pathname() {
 const char* filename() {
     static char name[128];
     memset(name, 0, strlen(name));
-    snprintf(name, 128, "%s/config", pathname());
+    snprintf(name, 128, "%s/config", configfilepath());
     return name;
 }
 
@@ -128,8 +127,8 @@ int open_config_file() {
     if (fd > 0) return fd;
 
     if (ENOENT == errno) {
-        if (mkdir(pathname(), 0755)) {
-            printf("create config path: %s fail", pathname());
+        if (mkdir(configfilepath(), 0755)) {
+            printf("create config path: %s fail", configfilepath());
             return fd;
         }
         fd = open(filename(), O_RDWR | O_CREAT, 0644);

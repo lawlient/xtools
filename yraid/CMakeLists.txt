@@ -11,6 +11,7 @@ set(biname yraid)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR/src})
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src srcs)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src/template srcs)
 
 # curses library
 
