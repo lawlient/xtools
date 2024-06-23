@@ -12,11 +12,10 @@ int generator(const char* templname, const char* targetname) {
 
     struct stat st;
     if (!stat(targetname, &st)) {
-        printf("already exist\n");
         return 0; /* already exist */
     }
 
-    int dscfd = open(targetname, O_RDWR | O_CREAT);
+    int dscfd = open(targetname, O_RDWR | O_CREAT, 0664);
     if (dscfd <= 0) {
         return -1;
     }
@@ -32,8 +31,6 @@ int generator(const char* templname, const char* targetname) {
         }
 
         close(srcfd);
-    } else {
-        printf("open template fail %s", templname);
     }
 
     close(dscfd);
@@ -72,10 +69,9 @@ void template(int argc, char *argv[]) {
     char tempdir[FILENAME_LENGTH];
     snprintf(tempdir, FILENAME_LENGTH, "%s/template", configfilepath());
     if (stat(tempdir, &dir)) {
-        printf("tempdir not found. create now, err: %d\n", errno);
         if (errno == ENOENT) {
             if (mkdir(tempdir, 0755)) {
-                printf("create tempdir fail\n");
+                printf("create template dir:%s fail\n", tempdir);
                 exit(errno);
             }
         }
@@ -100,13 +96,11 @@ int readline(int fd, char* line, int len) {
         if (c == '\n') break;
         if ((p - line) >= len) break;
     }
-    printf("[%s]:%d line:%s", __FILE__, __LINE__, line);
     return p - line;
 }
 
 int parseline(char *dsc, int dscsize, char *src, int srcsize) {
     memset(dsc, 0, dscsize);
-    printf("[%s]:%d line:%s", __FILE__, __LINE__, src);
     char *mark = NULL;
     char *w = dsc;
     char *p = src;
@@ -131,7 +125,6 @@ int parseline(char *dsc, int dscsize, char *src, int srcsize) {
 }
 
 int command(char *cmd, char *dsc, int dscsize) {
-    printf("[%s]:%d line:%s\n", __FILE__, __LINE__, cmd);
     char args[256];
     strncpy(args, cmd, strlen(cmd));
     int argc = 0;
