@@ -14,6 +14,9 @@
 #define YEAR_LINE 3                                             // start linenum of year title
 #define HEIGTH_MONTH 10                                         // heigth of month
 
+#define PAGE_MOVE_LINES 15
+#define PAGE_FOOT_GAP 5
+
 typedef struct Position_ Position;
 struct Position_ {
     int y;
@@ -388,6 +391,14 @@ static int preview(int key) {
     char* map = mmap(0, len, PROT_READ, MAP_PRIVATE, fd, 0);
     if (!map) return 0;
 
+    int nline = 0;
+    for (int i = 0; map[i]; i++) {
+        if ('\n' == map[i]) {
+            nline++;
+        }
+    }
+
+
     int x = 0;
     int y = 0;
     int ln = 0;
@@ -395,13 +406,13 @@ static int preview(int key) {
 
     while (1) {
         erase();
-        y = ln < 0 ? ln : 0;
+        y = 0;
         for (int i = 0; i < len && map[i]; i++) {
             if (map[i] == '\n') {
-                mvprintw(y, 0, "%s", line);
+                mvprintw(y + ln, 0, "%s", line);
                 x = 0;
-                y++;
                 memset(line, 0, BUFSIZ);
+                if (++y == LINES - 1 - ln) break;
                 continue;
             }
             line[x++] = map[i];
@@ -419,7 +430,15 @@ static int preview(int key) {
                 case ERR: usleep(200 * 1000); break;
                 case 'q':
                 case ESC: quit = 1; break;
-                case 'j': ln--; refresh = 1; break;
+                case KEY_DOWN:
+                case 'j': {
+                    if (ln + nline > LINES - 1 - PAGE_FOOT_GAP) {
+                        ln--;
+                        refresh = 1;
+                    }
+                    break;
+                }
+                case KEY_UP:
                 case 'k': {
                     if (ln < 0) {
                         ln++;
@@ -427,15 +446,26 @@ static int preview(int key) {
                     }
                     break;
                 }
+                case KEY_PPAGE:
                 case 'u': {
                     if (ln < 0) {
-                        ln += 5;
+                        ln += PAGE_MOVE_LINES;
                         if (ln > 0) ln = 0;
                         refresh = 1;
                     }
                     break;
                 }
-                case 'd': ln -= 5; refresh = 1; break;
+                case KEY_NPAGE:
+                case 'd': {
+                    if (ln + nline > LINES - 1 - PAGE_FOOT_GAP) {
+                        ln -= PAGE_MOVE_LINES;
+                        if (ln + nline < LINES - 1 - PAGE_FOOT_GAP)
+                            ln = LINES - 1 - PAGE_FOOT_GAP - nline;
+                        refresh = 1;
+                    }
+                    break;
+                }
+                case KEY_RESIZE: refresh = 1; break;
                 default: break;
             } 
             if (refresh || quit) break;

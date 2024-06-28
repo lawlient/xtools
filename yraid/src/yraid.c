@@ -32,7 +32,10 @@ int main(int argc, char *argv[]) {
     while (1) {
         int option_index = 0;
         c = getopt_long(argc, argv, optstring, log_options, &option_index);
-        if (-1 == c) break;
+        if (-1 == c) {
+            printf("Try '%s -h' for help\n", PROC);
+            return EPERM;
+        }
 
         switch (c) {
             case 'c': config(argc-2, &argv[2]);
@@ -67,8 +70,8 @@ int main(int argc, char *argv[]) {
 
     if (editor == NULL) {
         printf("use `%s -c editor xxx` to config your default editor\n", PROC);
-        printf("or try `%s -e xxx` to specific one off editor\n", PROC);
-        exit(0);
+        printf("or try '%s -e xxx' to specific one off editor\n", PROC);
+        return 0;
     }
 
     int CMD_LEN = 100;
