@@ -33,8 +33,7 @@ int main(int argc, char *argv[]) {
         int option_index = 0;
         c = getopt_long(argc, argv, optstring, log_options, &option_index);
         if (-1 == c) {
-            printf("Try '%s -h' for help\n", PROC);
-            return EPERM;
+            break; /* done */
         }
 
         switch (c) {
