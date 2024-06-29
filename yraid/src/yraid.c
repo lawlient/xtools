@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 
     if (generate) {
         if (t->generate(t, &date)) {
-            return ENONET;
+            return ENOENT;
         }
     }
 
@@ -88,11 +88,11 @@ void workdir(int exited) {
     if (!repository) {
         printf("you should set data path first\n");
         printf("try: %s -c set repository `your data path`\n", getenv("_"));
-        if (exited) exit(ENONET);
+        if (exited) exit(ENOENT);
     }
     if (chdir(repository)) {
         printf("data path: %s error\n", repository);
         printf("try: %s -c set repository `your data path`\n", getenv("_"));
-        if (exited) exit(ENONET);
+        if (exited) exit(ENOENT);
     }
 }

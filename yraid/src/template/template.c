@@ -1,4 +1,5 @@
 #include "template.h"
+#include <string.h>
 
 
 Template *t = &daily;
@@ -16,9 +17,17 @@ int generator(const char* templname, const char* targetname) {
     }
 
     int dscfd = open(targetname, O_RDWR | O_CREAT, 0664);
-    if (dscfd <= 0) {
-        return -1;
+    if (dscfd <= 0 && ENOENT == errno) {
+        char *tgtcpy = strdup(targetname);
+        const char* dir= dirname(tgtcpy);
+        if (mkdir(dir, 0755)) {
+            printf("create dir:%s fail\n", dir);
+            exit(errno);
+        }
+        free(tgtcpy);
+        dscfd = open(targetname, O_RDWR | O_CREAT, 0664);
     }
+    if (dscfd <= 0) return -1;
 
     int srcfd = open(templname, O_RDONLY);
     if (srcfd > 0) {
