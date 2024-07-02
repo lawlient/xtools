@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
         switch (c) {
             case 'c': config(argc-2, &argv[2]);
             case 'd': {
-                err = parse_date_string(optarg, &date);
+                err = parse_date_string(optarg);
                 if (err) {
                     printf("parse %s fail\n", optarg);
                     return err;

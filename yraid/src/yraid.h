@@ -49,7 +49,7 @@ extern void view();
 // struct tm;
 /* parse date string
  * eg: "yesterday, tomorrow, +2 day, -2 days, and so on */
-extern int parse_date_string(const char* date, struct tm *tm);
+extern int parse_date_string(const char* date);
 
 extern void workdir(int exit);
 

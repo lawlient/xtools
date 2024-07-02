@@ -1,88 +1,139 @@
 #include "yraid.h"
 
+#define DATE_MAX_LEN 128
 
-/// static char* numeric[] = {"zone", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", NULL};
+static char datestr[DATE_MAX_LEN + 1] = {0};
+static char *d = datestr;
 
-
-
-int parse_date_string(const char* date, struct tm *tm) {
-    if (date == NULL) return E_OK;
-    time_t now = time(0);
-
-    if (!strcmp(date, "yesterday")) {
-        now -= 86400;
-        localtime_r(&now, tm);
-        return E_OK;
+void moveday(struct tm *day, int off, char *step) {
+    if (!strcmp(step, "day")) {
+        time_t t = mktime(day);
+        t += off * 86400;
+        localtime_r(&t, day);
+        return;
     }
-
-    if (!strcmp(date, "tomorrow")) {
-        now += 86400;
-        localtime_r(&now, tm);
-        return E_OK;
+    if (!strcmp(step, "week")) {
+        moveday(day, 7*off, "day");
+        return;
     }
-
-
-    struct args {
-        const char *p;
-        int l;
-        int used;
-    } datestr[30];
-    int argx = 0;
-
-    const char *p = date;
-    while (*p == ' ') p++;
-    for (int i = 0; i < 30 && *p != '\0'; i++) {
-        datestr[i].p = p;
-        while (*p != '\0' && *p != ' ') p++;
-        datestr[i].l = p - datestr[i].p;
-        while (*p != '\0' && *p == ' ') p++;
-        datestr[i].used = 0;
-        argx++;
+    if (!strcmp(step, "month")) {
+        day->tm_year += off / 12;
+        // fix 
+        day->tm_mon += off % 12;
+        return;
     }
+    if (!strcmp(step, "year")) {
+        day->tm_year += off;
+        return;
+    }
+}
 
-    /// for (int i = 0; i < argx; i++) {
-    ///     char buf[100];
-    ///     strncpy(buf, datestr[i].p, datestr[i].l);
-    ///     buf[datestr[i].l] = '\0';
-    ///     printf("%d : %s\n", i, buf);
-    /// }
-    /// exit(0);
+typedef enum TokenType_ {
+    DONE,
+    NUMBER,
+    MONDAY, THUSDAY, WEDNESDAY, THURSDAY, FIRDAY, SATURDAY, SUNDAY,
+    DAY, WEEK, MONTH, YEAR,
+    YESTERDAY, TOMORROW,
+    LAST, NEXT,
+} TokenType;
+int num = 0;
 
-    int used  = 0;
-    int day   = 0;
-    int month = 0;
-    int year  = 0;
-    while (used < argx) {
-        for (int i = 0; i < argx; i++) {
-            if (datestr[i].used) continue;
-            if (!strcmp(datestr[i].p, "day") || !strcmp(datestr[i].p, "days")) {
-                datestr[i].used = 1; used++;
-                if (i - 1 >= 0) day = atoi(datestr[i-1].p);
-                if (0 == day) exit(E_DATESTR_INVALID);
-                datestr[i-1].used = 1; used++;
-                continue;
-            }
 
-            if (!strcmp(datestr[i].p, "month") || !strcmp(datestr[i].p, "monthes")) {
-                datestr[i].used = 1; used++;
-                if (i - 1 >= 0) month = atoi(datestr[i-1].p);
-                if (0 == month) exit(E_DATESTR_INVALID);
-                datestr[i-1].used = 1; used++;
-                continue;
-            }
 
-            if (!strcmp(datestr[i].p, "year") || !strcmp(datestr[i].p, "years")) {
-                datestr[i].used = 1; used++;
-                if (i - 1 >= 0) year = atoi(datestr[i-1].p);
-                if (0 == year) exit(E_DATESTR_INVALID);
-                datestr[i-1].used = 1; used++;
-                continue;
-            }
+static char* numeric[] = {"zone", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", NULL};
+// static char* weekname[] = { "Monday", "Thusday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", NULL };
+
+char* next() {
+    char* token = strtok(d, " ");
+    d = NULL;
+    return token;
+}
+
+TokenType token() {
+    char* token = next();
+    if (!token) return DONE;
+    if (!strcmp(token, "yesterday")) return YESTERDAY;
+    if (!strcmp(token, "tomorrow")) return TOMORROW;
+    if (!strcmp(token, "last")) return LAST;
+    if (!strcmp(token, "next")) return NEXT;
+    if (!strcmp(token, "day")) return DAY;
+    if (!strcmp(token, "week")) return WEEK;
+    if (!strcmp(token, "month")) return MONTH;
+    if (!strcmp(token, "year")) return YEAR;
+
+    for (int i = 0; numeric[i]; i++) {
+        if (!strcmp(token, numeric[i])) {
+            num = i;
+            return NUMBER;
         }
     }
 
-    now += day * 86400;
-    localtime_r(&now, tm);
+    num = atoi(token);
+    return NUMBER;
+}
+
+int parser() {
+    TokenType tt = token();
+    while (tt) {
+        switch (tt) {
+        case LAST:
+            tt = token();
+            switch (tt) {
+            case DAY: moveday(&date, -1, "day"); break;
+            case WEEK: moveday(&date, -1, "week"); break;
+            case MONTH: moveday(&date, -1, "month"); break;
+            case YEAR: moveday(&date, -1, "year"); break;
+            default:
+                printf("invalid date: %s\n", datestr);
+                return EINVAL;
+            }
+            break;
+        case NEXT:
+            tt = token();
+            switch (tt) {
+            case DAY: moveday(&date, 1, "day"); break;
+            case WEEK: moveday(&date, 1, "week"); break;
+            case MONTH: moveday(&date, 1, "month"); break;
+            case YEAR: moveday(&date, 1, "year"); break;
+            default:
+                printf("invalid date: %s\n", datestr);
+                return EINVAL;
+            }
+            break;
+        case YESTERDAY: moveday(&date, -1, "day"); break;
+        case TOMORROW: moveday(&date, 1, "day"); break;
+        case NUMBER:
+            tt = token();
+            switch (tt) {
+            case DAY: moveday(&date, num, "day"); break;
+            case WEEK: moveday(&date, num, "week"); break;
+            case MONTH: moveday(&date, num, "month"); break;
+            case YEAR: moveday(&date, num, "year"); break;
+            default:
+                printf("invalid date: %s\n", datestr);
+                exit(EINVAL);
+            }
+            break;
+
+        default:
+            printf("invalid token: %d\n", tt);
+            exit(EINVAL);
+        }
+
+        tt = token();
+    }
+    return 0;
+}
+
+
+
+int parse_date_string(const char* datearg) {
+    if (datearg == NULL) return E_OK;
+
+    strncpy(datestr, datearg, DATE_MAX_LEN);
+
+    parser();
+
     return E_OK;
 }
 
