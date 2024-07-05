@@ -4,6 +4,7 @@
 #include "template/template.h"
 
 #include "errcode.h"
+#include "day.h"
 
 #include <stdio.h>
 #include <stdlib.h>

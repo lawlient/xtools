@@ -49,10 +49,7 @@ static int daily_exist(const struct tm *date);
 static int is_today(const struct tm *date);
 static void locate();
 static int is_focus(int y, int x);
-static int isLeapYear(int year);
-static int get_max_dayofmonth(const struct tm *date);
 
-static struct tm getDate(int year, int month, int week, int sort);
 
 static void initcrt();
 static void exitcrt();
@@ -246,51 +243,6 @@ int is_focus(int y, int x) {
     return (x >= focus.x && x < focus.x + 3);
 }
 
-int get_max_dayofmonth(const struct tm *d) {
-    static const int MAX_DAY_IN_LEAP_YEAR[] = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-    static const int MAX_DAY_IN_YEAR[]      = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-    if (isLeapYear(d->tm_year + 1900)) {
-        return MAX_DAY_IN_LEAP_YEAR[d->tm_mon];
-    }
-    return MAX_DAY_IN_YEAR[d->tm_mon];
-}
-
-int isLeapYear(int year) {
-    if (year % 4 == 0 && year % 100 != 0) {
-        return 1;
-    } 
-    return year % 400 == 0;
-}
-
-// 计算某年某月第一天是星期几
-int getFirstDayOfWeek(int y, int m) {
-    /* 基姆拉尔森计算公式
-    W= (d+2m+3(m+1)/5+y+y/4-y/100+y/400+1) mod 7 */
-    m++; /* start from one */
-    if (m == 1 /* Jan */ || m == 2 /* Feb */) {
-        y--;
-        m += 12;
-    }
-    return (1 + 2 * m + 3 * (m+1) / 5 + y + y/4 - y/100 + y/400 +1) % 7;
-}
-
-struct tm getDate(int year, int month, int wday, int first) {
-    int wdayOf1stDay = getFirstDayOfWeek(year, month);
-    struct tm tmp = date;
-
-    tmp.tm_year = year - 1900;
-    tmp.tm_mon  = month;
-    tmp.tm_mday = 1 + ((wday - wdayOf1stDay + 7) % 7);
-    if (!first) {
-        while (tmp.tm_mday + 7 <= get_max_dayofmonth(&tmp)) {
-            tmp.tm_mday += 7;
-        }
-    }
-    tmp.tm_wday = wday;
-    return tmp;
-} 
-
-
 
 /*  ---------------------------  op related ---------------- */
 
@@ -327,20 +279,20 @@ static int up(int key) {
         int year = date.tm_year+1900;
         if (date.tm_mon < 3) year--;
         int month   = (date.tm_mon + 9) % 12;
-        date = getDate(year, month, date.tm_wday, 0);
+        getDate(&date, year, month, date.tm_wday, 0);
     }
     locate();
     return 0;
 }
 
 static int down(int key) {
-    if (date.tm_mday + 7 <= get_max_dayofmonth(&date)) {
+    if (date.tm_mday + 7 <= ndayofmonth(&date)) {
         date.tm_mday += 7;
     } else {
         int year = date.tm_year+1900;
         if (date.tm_mon >= 9) year += 1;
         int month = (date.tm_mon + 3) % 12;
-        date = getDate(year, month, date.tm_wday, 1);
+        getDate(&date, year, month, date.tm_wday, 1);
     }
     locate();
     return 0;
@@ -355,14 +307,14 @@ static int last_day(int key) {
         if (date.tm_mon == 0) year--;
         int month = (date.tm_mon + 11) % 12;
         int wday  = (date.tm_wday + 6) % 7;
-        date = getDate(year, month, wday, 0);
+        getDate(&date, year, month, wday, 0);
     }
     locate();
     return 0;
 }
 
 static int next_day(int key) {
-     if (date.tm_mday < get_max_dayofmonth(&date)) {
+     if (date.tm_mday < ndayofmonth(&date)) {
         date.tm_mday++;
         date.tm_wday = (date.tm_wday + 1) % 7;
     } else {
@@ -370,7 +322,7 @@ static int next_day(int key) {
         if (date.tm_mon == 11) year++;
         int month = (date.tm_mon + 1) % 12;
         int wday  = (date.tm_wday + 1) % 7;
-        date = getDate(year, month, wday, 1);
+        getDate(&date, year, month, wday, 1);
     }
     locate();
     return 0;

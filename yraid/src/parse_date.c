@@ -5,43 +5,21 @@
 static char datestr[DATE_MAX_LEN + 1] = {0};
 static char *d = datestr;
 
-void moveday(struct tm *day, int off, char *step) {
-    if (!strcmp(step, "day")) {
-        time_t t = mktime(day);
-        t += off * 86400;
-        localtime_r(&t, day);
-        return;
-    }
-    if (!strcmp(step, "week")) {
-        moveday(day, 7*off, "day");
-        return;
-    }
-    if (!strcmp(step, "month")) {
-        day->tm_year += off / 12;
-        // fix 
-        day->tm_mon += off % 12;
-        return;
-    }
-    if (!strcmp(step, "year")) {
-        day->tm_year += off;
-        return;
-    }
-}
-
 typedef enum TokenType_ {
     DONE,
     NUMBER,
-    MONDAY, THUSDAY, WEDNESDAY, THURSDAY, FIRDAY, SATURDAY, SUNDAY,
+    SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FIRDAY, SATURDAY,
     DAY, WEEK, MONTH, YEAR,
-    YESTERDAY, TOMORROW,
-    LAST, NEXT,
+    YESTERDAY, TOMORROW, LAST, NEXT,
+    THIS, FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, 
 } TokenType;
 int num = 0;
 
 
 
 static char* numeric[] = {"zone", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", NULL};
-// static char* weekname[] = { "Monday", "Thusday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", NULL };
+static char* weekname[] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", NULL };
+static char* order[] = {"this", "first", "second", "third", "fourth", "fifth", "sixth", NULL };
 
 char* next() {
     char* token = strtok(d, " ");
@@ -54,8 +32,14 @@ TokenType token() {
     if (!token) return DONE;
     if (!strcmp(token, "yesterday")) return YESTERDAY;
     if (!strcmp(token, "tomorrow")) return TOMORROW;
-    if (!strcmp(token, "last")) return LAST;
-    if (!strcmp(token, "next")) return NEXT;
+    if (!strcmp(token, "last")) {
+        num = -1;
+        return LAST;
+    }
+    if (!strcmp(token, "next")) {
+        num = 1;
+        return NEXT;
+    }
     if (!strcmp(token, "day")) return DAY;
     if (!strcmp(token, "week")) return WEEK;
     if (!strcmp(token, "month")) return MONTH;
@@ -68,6 +52,19 @@ TokenType token() {
         }
     }
 
+    for (int i = 0; weekname[i]; i++) {
+        if (!strcmp(weekname[i], token)) {
+            return SUNDAY + i;
+        }
+    }
+
+    for (int i = 0; order[i]; i++) {
+        if (!strcmp(order[i], token)) {
+            num = i;
+            return THIS + i;
+        }
+    }
+
     num = atoi(token);
     return NUMBER;
 }
@@ -77,31 +74,7 @@ int parser() {
     while (tt) {
         switch (tt) {
         case LAST:
-            tt = token();
-            switch (tt) {
-            case DAY: moveday(&date, -1, "day"); break;
-            case WEEK: moveday(&date, -1, "week"); break;
-            case MONTH: moveday(&date, -1, "month"); break;
-            case YEAR: moveday(&date, -1, "year"); break;
-            default:
-                printf("invalid date: %s\n", datestr);
-                return EINVAL;
-            }
-            break;
         case NEXT:
-            tt = token();
-            switch (tt) {
-            case DAY: moveday(&date, 1, "day"); break;
-            case WEEK: moveday(&date, 1, "week"); break;
-            case MONTH: moveday(&date, 1, "month"); break;
-            case YEAR: moveday(&date, 1, "year"); break;
-            default:
-                printf("invalid date: %s\n", datestr);
-                return EINVAL;
-            }
-            break;
-        case YESTERDAY: moveday(&date, -1, "day"); break;
-        case TOMORROW: moveday(&date, 1, "day"); break;
         case NUMBER:
             tt = token();
             switch (tt) {
@@ -109,9 +82,48 @@ int parser() {
             case WEEK: moveday(&date, num, "week"); break;
             case MONTH: moveday(&date, num, "month"); break;
             case YEAR: moveday(&date, num, "year"); break;
+            case SUNDAY:
+            case MONDAY:
+            case TUESDAY:
+            case WEDNESDAY:
+            case THURSDAY:
+            case FIRDAY:
+            case SATURDAY: whatday(&date, num, tt - SUNDAY); break;
             default:
                 printf("invalid date: %s\n", datestr);
-                exit(EINVAL);
+                return EINVAL;
+            }
+            break;
+
+        case YESTERDAY: moveday(&date, -1, "day"); break;
+        case TOMORROW: moveday(&date, 1, "day"); break;
+
+        case SUNDAY:
+        case MONDAY:
+        case TUESDAY:
+        case WEDNESDAY:
+        case THURSDAY:
+        case FIRDAY:
+        case SATURDAY: whatday(&date, 0, tt - SUNDAY); break;
+
+        case FIRST:
+        case SECOND:
+        case THIRD:
+        case FOURTH:
+        case FIFTH: 
+        case SIXTH:
+            tt = token();
+            switch (tt) {
+            case SUNDAY:
+            case MONDAY:
+            case TUESDAY:
+            case WEDNESDAY:
+            case THURSDAY:
+            case FIRDAY:
+            case SATURDAY: orderweekday(&date, num, tt - SUNDAY); break;
+            default:
+                printf("invalid date: %s\n", datestr);
+                return EINVAL;
             }
             break;
 
