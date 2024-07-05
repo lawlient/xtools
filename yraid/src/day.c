@@ -2,29 +2,27 @@
 #include "time.h"
 #include "string.h"
 
-int ndayofmonth(const struct tm *d) {
+int ndayofmonth(int y, int m) {
     static const int MAX_DAY_IN_LEAP_YEAR[] = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     static const int MAX_DAY_IN_YEAR[]      = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-    if (isLeapYear(d->tm_year + 1900)) {
-        return MAX_DAY_IN_LEAP_YEAR[d->tm_mon];
+    if (isleapyear(y)) {
+        return MAX_DAY_IN_LEAP_YEAR[m];
     }
-    return MAX_DAY_IN_YEAR[d->tm_mon];
+    return MAX_DAY_IN_YEAR[m];
 }
 
-int isLeapYear(int year) {
+int isleapyear(int year) {
     if (year % 4 == 0 && year % 100 != 0) {
         return 1;
     } 
     return year % 400 == 0;
 }
 
-/* get wday of the first day of month
-  y: year number, eg: 2001
-  m: month [0 - 11]
-*/
+/* 
+ * Kim larsen calculation formula:
+ * weekday = (d+2m+3(m+1)/5+y+y/4-y/100+y/400+1) mod 7 
+ */
 int firstdayofmonth(int y, int m) {
-    /* 基姆拉尔森计算公式
-    W= (d+2m+3(m+1)/5+y+y/4-y/100+y/400+1) mod 7 */
     m++; /* start from one */
     if (m == 1 /* Jan */ || m == 2 /* Feb */) {
         y--;
@@ -40,7 +38,7 @@ void getDate(struct tm *tm, int year, int month, int wday, int first) {
     tm->tm_mon  = month;
     tm->tm_mday = 1 + ((wday - wdayOf1stDay + 7) % 7);
     if (!first) {
-        while (tm->tm_mday + 7 <= ndayofmonth(tm)) {
+        while (tm->tm_mday + 7 <= ndayofmonth(year, month)) {
             tm->tm_mday += 7;
         }
     }
@@ -48,19 +46,18 @@ void getDate(struct tm *tm, int year, int month, int wday, int first) {
 } 
 
 
-/* move date by day unit */
-void moveday(struct tm *day, int off, char *step) {
-    if (!strcmp(step, "day")) {
+void moveday(struct tm *day, int off, char *unit) {
+    if (!strcmp(unit, "day")) {
         time_t t = mktime(day);
         t += off * 86400;
         localtime_r(&t, day);
         return;
     }
-    if (!strcmp(step, "week")) {
+    if (!strcmp(unit, "week")) {
         moveday(day, 7*off, "day");
         return;
     }
-    if (!strcmp(step, "month")) {
+    if (!strcmp(unit, "month")) {
         day->tm_year += off / 12;
         day->tm_mon += off % 12;
         if (day->tm_mon < 0) {
@@ -72,17 +69,16 @@ void moveday(struct tm *day, int off, char *step) {
         }
         return;
     }
-    if (!strcmp(step, "year")) {
+    if (!strcmp(unit, "year")) {
         day->tm_year += off;
         return;
     }
 }
 
-/* offset to week day */
-void whatday(struct tm *day, int off, int what) {
-    if (what < 0 || what > 7) return;
+void whatday(struct tm *day, int off, int wday) {
+    if (wday < 0 || wday > 7) return;
 
-    int fix = what - day->tm_wday;
+    int fix = wday - day->tm_wday;
     moveday(day, fix, "day");
     if (0 == off) {
         return;
@@ -95,11 +91,11 @@ void whatday(struct tm *day, int off, int what) {
     return;
 }
 
-void orderweekday(struct tm *day, int order, int what) {
-    if (what < 0 || what > 7) return;
+void orderweekday(struct tm *day, int order, int wday) {
+    if (wday < 0 || wday > 7) return;
 
     day->tm_mday = 1;
     day->tm_wday = firstdayofmonth(day->tm_year + 1900, day->tm_mon);
-    if (day->tm_wday == what) order--;
-    whatday(day, order, what);
+    if (day->tm_wday == wday) order--;
+    whatday(day, order, wday);
 }

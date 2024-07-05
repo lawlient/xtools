@@ -21,13 +21,13 @@ static char* numeric[] = {"zone", "one", "two", "three", "four", "five", "six", 
 static char* weekname[] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", NULL };
 static char* order[] = {"this", "first", "second", "third", "fourth", "fifth", "sixth", NULL };
 
-char* next() {
+static char* next() {
     char* token = strtok(d, " ");
     d = NULL;
     return token;
 }
 
-TokenType token() {
+static TokenType token() {
     char* token = next();
     if (!token) return DONE;
     if (!strcmp(token, "yesterday")) return YESTERDAY;
@@ -69,7 +69,7 @@ TokenType token() {
     return NUMBER;
 }
 
-int parser() {
+static int parser() {
     TokenType tt = token();
     while (tt) {
         switch (tt) {
@@ -139,7 +139,7 @@ int parser() {
 
 
 
-int parse_date_string(const char* datearg) {
+int cmd_date(const char* datearg) {
     if (datearg == NULL) return 0;
     if (strlen(datearg) > DATE_MAX_LEN) return E2BIG;
 

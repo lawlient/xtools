@@ -42,7 +42,7 @@ static const char *WEEK_cn[] = {"日", "一", "二", "三", "四", "五", "六",
 
 static void draw();
 static void year();
-static void quarter(int s);
+static void quarter(int q);
 static void month(int y, int x, int m);
 static void day(int y, int x, const struct tm *);
 static int daily_exist(const struct tm *date);
@@ -142,10 +142,10 @@ void year() {
     attroff(A_BOLD);
 }
 
-void quarter(int s) {
-    int y = YEAR_LINE + YEAR_TITLE_COL_GAP + s * HEIGTH_MONTH;
+void quarter(int q) {
+    int y = YEAR_LINE + YEAR_TITLE_COL_GAP + q * HEIGTH_MONTH;
     int x = (COLS - COLNUM_QUARTER) / 2;
-    int m = s * 3;
+    int m = q * 3;
     month(y, x, m); x += COLNUM_MONTH + MONTH_COL_GAP; m++;
     month(y, x, m); x += COLNUM_MONTH + MONTH_COL_GAP; m++;
     month(y, x, m);
@@ -267,7 +267,7 @@ static int today(int key) {
     return 0;
 }
 
-static int lang(int key) {
+static int i18n(int key) {
     CHINESE = ~CHINESE;
     return 0;
 }
@@ -286,7 +286,7 @@ static int up(int key) {
 }
 
 static int down(int key) {
-    if (date.tm_mday + 7 <= ndayofmonth(&date)) {
+    if (date.tm_mday + 7 <= ndayofmonth(date.tm_year + 1900, date.tm_mon)) {
         date.tm_mday += 7;
     } else {
         int year = date.tm_year+1900;
@@ -314,7 +314,7 @@ static int last_day(int key) {
 }
 
 static int next_day(int key) {
-     if (date.tm_mday < ndayofmonth(&date)) {
+     if (date.tm_mday < ndayofmonth(date.tm_year + 1900, date.tm_mon)) {
         date.tm_mday++;
         date.tm_wday = (date.tm_wday + 1) % 7;
     } else {
@@ -325,6 +325,26 @@ static int next_day(int key) {
         getDate(&date, year, month, wday, 1);
     }
     locate();
+    return 0;
+}
+
+static int hint(int key) {
+    int y = 0;
+    erase();
+    mvprintw(y++, 0, "%s", "yraid "VERSION" - (C) 2020-2024 Jovan.");
+    y++;
+    mvprintw(y++, 0, "Press any key to return.");
+    refresh();
+
+    int k = ERR;
+    do {
+        k = getch();
+        if (k == ERR) {
+            usleep(200 * 1000);
+            continue;
+        }
+        break;
+    } while(1);
     return 0;
 }
 
@@ -443,11 +463,16 @@ void load_actions() {
     actions['n']        = next_year;
     actions['p']        = last_year;
     actions['0']        = today;
-    actions['l']        = lang;
+    actions['i']        = i18n;
     actions[KEY_UP]     = up;
     actions[KEY_DOWN]   = down;
     actions[KEY_LEFT]   = last_day;
     actions[KEY_RIGHT]  = next_day;
+    actions['k']        = up;
+    actions['j']        = down;
+    actions['h']        = last_day;
+    actions['l']        = next_day;
+    actions['H']        = hint;
     actions[ENTER]      = preview;
     actions[KEY_RESIZE] = redraw;
 }

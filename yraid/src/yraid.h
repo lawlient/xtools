@@ -21,6 +21,14 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
+#ifndef VERSION
+#define VERSION "1.0.0"
+#endif
+
+#ifndef EMAIL
+#define EMAIL ""
+#endif
+
 #define ENV_HOME (getenv("HOME"))
 #define PROC basename(getenv("_"))
 
@@ -50,7 +58,7 @@ extern void view();
 // struct tm;
 /* parse date string
  * eg: "yesterday, tomorrow, +2 day, -2 days, and so on */
-extern int parse_date_string(const char* date);
+extern int cmd_date(const char* date);
 
 extern void workdir(int exit);
 
