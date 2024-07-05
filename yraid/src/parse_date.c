@@ -140,12 +140,13 @@ int parser() {
 
 
 int parse_date_string(const char* datearg) {
-    if (datearg == NULL) return E_OK;
+    if (datearg == NULL) return 0;
+    if (strlen(datearg) > DATE_MAX_LEN) return E2BIG;
 
     strncpy(datestr, datearg, DATE_MAX_LEN);
 
     parser();
 
-    return E_OK;
+    return 0;
 }
 

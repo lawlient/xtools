@@ -3,9 +3,9 @@
 
 #include "template/template.h"
 
-#include "errcode.h"
 #include "day.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

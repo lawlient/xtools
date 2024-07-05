@@ -21,7 +21,7 @@ struct tm date;
 
 int main(int argc, char *argv[]) {
     int c;
-    int err = E_OK;
+    int err = 0;
     int generate = 0;
 
     /* set default time : now */
