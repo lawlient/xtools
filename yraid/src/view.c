@@ -93,6 +93,7 @@ void view() {
 void initcrt() {
     initscr();
     start_color();
+    use_default_colors();
     noecho();
     nonl();
     nodelay(stdscr, true);
@@ -106,9 +107,9 @@ void initcrt() {
     mousemask(BUTTON1_RELEASED, NULL);
 #endif
 
-    init_pair(FOCUS, COLOR_RED, COLOR_WHITE);
-    init_pair(EXIST, COLOR_GREEN, COLOR_BLACK);
-    init_pair(NONE, COLOR_WHITE, COLOR_BLACK);
+    init_pair(FOCUS, COLOR_WHITE, COLOR_CYAN);
+    init_pair(EXIST, COLOR_GREEN, -1);
+    init_pair(NONE, -1, -1);
 
     load_actions();
 }
@@ -329,11 +330,16 @@ static int next_day(int key) {
 }
 
 static int hint(int key) {
+    int WIDTH = 40, GAP = 5;
     int y = 0;
     erase();
     mvprintw(y++, 0, "%s", "yraid "VERSION" - (C) 2020-2024 Jovan.");
     y++;
-    mvprintw(y++, 0, "Press any key to return.");
+    mvaddnstr(y, 0, "n: next year", WIDTH); mvaddnstr(y, WIDTH + GAP, "i: chinese/english", WIDTH); y++;
+    mvaddnstr(y, 0, "p: last year", WIDTH); mvaddnstr(y, WIDTH + GAP, "0: back to today", WIDTH); y++;
+    mvaddnstr(y, 0, "H: show this hint", WIDTH); mvaddnstr(y, WIDTH + GAP, "ENTER: try to open daily", WIDTH); y++;
+    y++;
+    mvprintw(y, 0, "Press any key to return.");
     refresh();
 
     int k = ERR;
