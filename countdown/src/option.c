@@ -44,7 +44,7 @@ static void init_option(Option* opt) {
 OptCode parse_option(int argc, char* argv[], Option* opt) {
     init_option(opt);
     int optchr, opti = 0;
-    while ((optchr = getopt_long(argc, argv, "c:t:hpv", &long_options, &opti)) != EOF) {
+    while ((optchr = getopt_long(argc, argv, "c:t:hpv", long_options, &opti)) != EOF) {
         switch(optchr) {
             case 'h': usage(); exit(0);
             case 'v': version(); exit(0);

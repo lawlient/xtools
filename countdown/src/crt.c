@@ -35,6 +35,7 @@ void quit(char* msg) {
 static void initcolor() {
     if (!has_colors()) return;
     start_color();
+    use_default_colors();
 
     init_pair(colorpair_num(T_DEFAULT, CUSTOM), COLOR_WHITE,  COLOR_BLACK);
     init_pair(colorpair_num(T_DEFAULT, RED), COLOR_RED,  COLOR_BLACK);
