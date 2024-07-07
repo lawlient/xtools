@@ -1,5 +1,6 @@
 #include "yraid.h"
 
+#include <stdlib.h>
 #include <time.h>
 #include <ncurses.h>
 #include <locale.h>
@@ -7,7 +8,7 @@
 #define ENTER   13
 #define ESC     27
 
-#define COLNUM_MONTH     20                                     // width of month
+#define COLNUM_MONTH     20                                     // width of month (= 2 * 7 + 1 * 6)
 #define YEAR_TITLE_COL_GAP   2                                  // width of gap between year title
 #define MONTH_COL_GAP   2                                       // width of gap between month
 #define COLNUM_QUARTER (3 * COLNUM_MONTH + 2 * MONTH_COL_GAP)   // width of quarter
@@ -17,13 +18,6 @@
 #define PAGE_MOVE_LINES 15
 #define PAGE_FOOT_GAP 5
 
-typedef struct Position_ Position;
-struct Position_ {
-    int y;
-    int x;
-} focus = {
-    0, 0
-};
 
 typedef int (*action)(int key);
 static action *actions;
@@ -31,24 +25,23 @@ static void load_actions();
 static void free_actions();
 
 enum Color_ {
-    FOCUS = 1,
+    DEFAULT,
+    CURSOR,
     EXIST,
-    NONE
 };
 
 static int CHINESE = 0; /* control show in english or chinese, default is english */
-static const char *WEEK_en[] = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa", NULL};
-static const char *WEEK_cn[] = {"日", "一", "二", "三", "四", "五", "六", NULL};
+static const char *WEEK_en = " Su Mo Tu We Th Fr Sa";
+static const char *WEEK_cn = " 日 一 二 三 四 五 六";
 
+static struct tm TODAY;
 static void draw();
-static void year();
-static void quarter(int q);
-static void month(int y, int x, int m);
-static void day(int y, int x, const struct tm *);
+static void draw_year();
+static void draw_month(int m);
+static void draw_day(const struct tm *, int y, int x);
 static int daily_exist(const struct tm *date);
 static int is_today(const struct tm *date);
-static void locate();
-static int is_focus(int y, int x);
+static int is_cursor_day(const struct tm* day);
 
 
 static void initcrt();
@@ -62,8 +55,6 @@ void view() {
 
     setlocale(LC_ALL, "");
     initcrt();
-
-    locate();
 
     draw();
 
@@ -107,9 +98,9 @@ void initcrt() {
     mousemask(BUTTON1_RELEASED, NULL);
 #endif
 
-    init_pair(FOCUS, COLOR_WHITE, COLOR_CYAN);
+    init_pair(CURSOR, COLOR_WHITE, COLOR_CYAN);
     init_pair(EXIST, COLOR_GREEN, -1);
-    init_pair(NONE, -1, -1);
+    init_pair(DEFAULT, -1, -1);
 
     load_actions();
 }
@@ -120,17 +111,20 @@ void exitcrt() {
 }
 
 void draw() {
-    erase(); // screen blink when I use `clear()`
-    year();
-    quarter(0);
-    quarter(1);
-    quarter(2);
-    quarter(3);
+    time_t now = time(0);
+    localtime_r(&now, &TODAY);
+
+    erase();
+
+    draw_year();
+    for (int m = 0; m < 12; m++)
+      draw_month(m);
+
     refresh();
 }
 
 
-void year() {
+void draw_year() {
     char line[COLNUM_QUARTER];
     int size = 0;
     size += snprintf(line+size, COLNUM_QUARTER-size, "%s ", zodiac());
@@ -143,53 +137,42 @@ void year() {
     attroff(A_BOLD);
 }
 
-void quarter(int q) {
-    int y = YEAR_LINE + YEAR_TITLE_COL_GAP + q * HEIGTH_MONTH;
-    int x = (COLS - COLNUM_QUARTER) / 2;
-    int m = q * 3;
-    month(y, x, m); x += COLNUM_MONTH + MONTH_COL_GAP; m++;
-    month(y, x, m); x += COLNUM_MONTH + MONTH_COL_GAP; m++;
-    month(y, x, m);
-}
+void draw_month(int m) {
+    int y = YEAR_LINE + YEAR_TITLE_COL_GAP + (m / 3) * HEIGTH_MONTH;
+    int x = (COLS - COLNUM_QUARTER) / 2 + (m % 3) * (COLNUM_MONTH + MONTH_COL_GAP);
 
-void month(int y, int x, int m) {
     char line[COLNUM_MONTH];
     struct tm tmp = date;
     tmp.tm_mon = m;
     strftime(line, COLNUM_MONTH, "%B", &tmp);
+
     mvaddstr(y++, x + (COLNUM_MONTH - strlen(line)) / 2, line);
-    int xx = x + 1/* gap */;
-    for (int d = 0; d < 7; d++) {
-        const char* w = CHINESE ? WEEK_cn[d] : WEEK_en[d];
-        mvprintw(y, xx, "%s", w);
-        xx += strlen(w) + (CHINESE ? 0 : 1)/* gap */;
-    }
-    y++;
+    mvprintw(y++, x, "%s", CHINESE ? WEEK_cn : WEEK_en);
 
-    tmp.tm_mday = 1;
-    time_t ttime = mktime(&tmp);
+    int nday = ndayofmonth(tmp.tm_year + 1900, m);
+    int wday = firstdayofmonth(tmp.tm_year + 1900, m);
+    for (int d = 1; d <= nday; d++) {
+        tmp.tm_mday = d;
+        tmp.tm_wday = (d + wday - 1) % 7;
+        if (tmp.tm_wday == 0) {
+            y++;
+        }
 
-    struct tm mtm;
-    int yy = 0;
-    for (int d = 0; d < 31; d++, ttime += 86400) {
-        gmtime_r(&ttime, &mtm);
-        if (mtm.tm_mon != m) break;
-        day(y + yy, x + 3 * (mtm.tm_wday), &mtm);
-        if (mtm.tm_wday == 6 /* end of week */) yy++;
+        draw_day(&tmp, y, x + 3 * tmp.tm_wday);
     }
 }
 
-void day(int y, int x, const struct tm *tm) {
+void draw_day(const struct tm *tm, int y, int x) {
     mvaddstr(y, x++, " ");
     char mday[3];
     strftime(mday, 3, "%e", tm);
 
     if (is_today(tm)) attron(A_UNDERLINE);
 
-    if (is_focus(y, x)) {
-        attron(COLOR_PAIR(FOCUS));
+    if (is_cursor_day(tm)) {
+        attron(COLOR_PAIR(CURSOR));
         mvaddstr(y, x, mday);
-        attroff(COLOR_PAIR(FOCUS));
+        attroff(COLOR_PAIR(CURSOR));
 
     } else if (daily_exist(tm)) {
         attron(COLOR_PAIR(EXIST));
@@ -197,9 +180,9 @@ void day(int y, int x, const struct tm *tm) {
         attroff(COLOR_PAIR(EXIST));
 
     } else {
-        attron(COLOR_PAIR(NONE));
+        attron(COLOR_PAIR(DEFAULT));
         mvaddstr(y, x, mday);
-        attroff(COLOR_PAIR(NONE));
+        attroff(COLOR_PAIR(DEFAULT));
     }
 
     if (is_today(tm)) attroff(A_UNDERLINE);
@@ -214,34 +197,19 @@ int daily_exist(const struct tm *d) {
 }
 
 int is_today(const struct tm *date) {
-    time_t now = time(0);
-    struct tm today;
-    localtime_r(&now, &today);
-    if (today.tm_year == date->tm_year &&
-        today.tm_mon == date->tm_mon &&
-        today.tm_mday == date->tm_mday) {
-        return 1;
-    }
-    return 0;
+    return (
+        TODAY.tm_mday == date->tm_mday &&
+        TODAY.tm_mon == date->tm_mon &&
+        TODAY.tm_year == date->tm_year
+    );
 }
 
-void locate() {
-    int quarter = date.tm_mon / 3;
-    focus.y = YEAR_LINE +  YEAR_TITLE_COL_GAP + quarter * HEIGTH_MONTH + 2/* month & weekname */;
-    focus.x = (COLS - COLNUM_QUARTER) / 2 + (date.tm_mon % 3) * (COLNUM_MONTH + MONTH_COL_GAP);
-    focus.x += (date.tm_wday % 7) * 3;
-
-    int mday = date.tm_mday;
-    while (mday > 7) {
-        focus.y++;
-        mday = mday - 7;
-    }
-    if (mday > date.tm_wday+1) focus.y++;
-}
-
-int is_focus(int y, int x) {
-    if (focus.y != y) return 0;
-    return (x >= focus.x && x < focus.x + 3);
+int is_cursor_day(const struct tm* day) {
+    return (
+        date.tm_mday == day->tm_mday &&
+        date.tm_mon == day->tm_mon &&
+        date.tm_year == day->tm_year
+    );
 }
 
 
@@ -249,22 +217,21 @@ int is_focus(int y, int x) {
 
 static int redraw(int key) { return 0; }
 
-static int last_year(int key) { 
-    date.tm_year--;
-    locate();
+/*
+ *  move to last year, keep month and day
+ */
+static int last_year(int key) {
+    moveday(&date, -1, "year");
     return 0;
 }
 
 static int next_year(int key) { 
-    date.tm_year++;
-    locate();
+    moveday(&date, 1, "year");
     return 0;
 }
 
 static int today(int key) {
-    time_t now = time(0);
-    localtime_r(&now, &date);
-    locate();
+    date = TODAY;
     return 0;
 }
 
@@ -282,7 +249,6 @@ static int up(int key) {
         int month   = (date.tm_mon + 9) % 12;
         getDate(&date, year, month, date.tm_wday, 0);
     }
-    locate();
     return 0;
 }
 
@@ -295,37 +261,16 @@ static int down(int key) {
         int month = (date.tm_mon + 3) % 12;
         getDate(&date, year, month, date.tm_wday, 1);
     }
-    locate();
     return 0;
 }
 
-static int last_day(int key) {
-    if (date.tm_mday > 1) {
-        date.tm_mday--;
-        date.tm_wday = (date.tm_wday + 6) % 7;
-    } else {
-        int year = date.tm_year+1900;
-        if (date.tm_mon == 0) year--;
-        int month = (date.tm_mon + 11) % 12;
-        int wday  = (date.tm_wday + 6) % 7;
-        getDate(&date, year, month, wday, 0);
-    }
-    locate();
+static int yesterday(int key) {
+    moveday(&date, -1, "day");
     return 0;
 }
 
-static int next_day(int key) {
-     if (date.tm_mday < ndayofmonth(date.tm_year + 1900, date.tm_mon)) {
-        date.tm_mday++;
-        date.tm_wday = (date.tm_wday + 1) % 7;
-    } else {
-        int year = date.tm_year+1900;
-        if (date.tm_mon == 11) year++;
-        int month = (date.tm_mon + 1) % 12;
-        int wday  = (date.tm_wday + 1) % 7;
-        getDate(&date, year, month, wday, 1);
-    }
-    locate();
+static int tomorrow(int key) {
+     moveday(&date, 1, "day");
     return 0;
 }
 
@@ -457,8 +402,6 @@ static int preview(int key) {
     return 0;
 }
 
-
-
 void load_actions() {
     free_actions();
     actions = (action *)malloc(KEY_MAX * sizeof(action));
@@ -472,15 +415,16 @@ void load_actions() {
     actions['i']        = i18n;
     actions[KEY_UP]     = up;
     actions[KEY_DOWN]   = down;
-    actions[KEY_LEFT]   = last_day;
-    actions[KEY_RIGHT]  = next_day;
+    actions[KEY_LEFT]   = yesterday;
+    actions[KEY_RIGHT]  = tomorrow;
     actions['k']        = up;
     actions['j']        = down;
-    actions['h']        = last_day;
-    actions['l']        = next_day;
+    actions['h']        = yesterday;
+    actions['l']        = tomorrow;
     actions['H']        = hint;
     actions[ENTER]      = preview;
     actions[KEY_RESIZE] = redraw;
 }
 
 void free_actions() { if (actions) free(actions); }
+

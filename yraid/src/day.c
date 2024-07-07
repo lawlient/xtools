@@ -1,6 +1,8 @@
 #include "day.h"
-#include "time.h"
-#include "string.h"
+#define _XOPEN_SOURCE
+#include <time.h>
+#include <string.h>
+#include <stdio.h>
 
 int ndayofmonth(int y, int m) {
     static const int MAX_DAY_IN_LEAP_YEAR[] = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -70,7 +72,13 @@ void moveday(struct tm *day, int off, char *unit) {
         return;
     }
     if (!strcmp(unit, "year")) {
-        day->tm_year += off;
+        char datebuf[33] = {0};
+        if (isleapyear(day->tm_year + 1900) && 1/*Feb*/ == day->tm_mon && 29 == day->tm_mday) {
+            day->tm_mday = 28;
+        }
+        snprintf(datebuf, 5, "%d", day->tm_year + off + 1900);
+        strftime(datebuf + 4, 33 - 4, "-%m-%d %T", day);
+        strptime(datebuf, "%F %T", day);
         return;
     }
 }
