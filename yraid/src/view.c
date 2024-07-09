@@ -18,8 +18,12 @@
 #define PAGE_MOVE_LINES 15
 #define PAGE_FOOT_GAP 5
 
-
-typedef int (*action)(int key);
+typedef enum {
+    AC_OK       = 0,
+    AC_REFRESH  = 0x1,
+    AC_QUIT     = 0x2,
+} ActionResult;
+typedef ActionResult (*action)(int key);
 static action *actions;
 static void load_actions();
 static void free_actions();
@@ -28,6 +32,7 @@ enum Color_ {
     DEFAULT,
     CURSOR,
     EXIST,
+    HIGHLIGHT,
 };
 
 static int CHINESE = 0; /* control show in english or chinese, default is english */
@@ -66,13 +71,12 @@ void view() {
             continue;
         }
 
-        if (ch == 'q') {
-            break;
-        }
-
         if (actions && actions[ch]) {
-            actions[ch](ch);
-            draw();
+            ActionResult ac = actions[ch](ch);
+            if (ac & AC_QUIT) break;
+            if (ac & AC_REFRESH) {
+                draw();
+            }
         }
 
     } while (1);
@@ -98,9 +102,10 @@ void initcrt() {
     mousemask(BUTTON1_RELEASED, NULL);
 #endif
 
+    init_pair(DEFAULT, -1, -1);
     init_pair(CURSOR, COLOR_WHITE, COLOR_CYAN);
     init_pair(EXIST, COLOR_GREEN, -1);
-    init_pair(DEFAULT, -1, -1);
+    init_pair(HIGHLIGHT, COLOR_CYAN, -1);
 
     load_actions();
 }
@@ -130,11 +135,10 @@ void draw_year() {
     size += snprintf(line+size, COLNUM_QUARTER-size, "%s ", zodiac());
     size += strftime(line+size, COLNUM_QUARTER-size, " %Y ", &date);
     size += snprintf(line+size, COLNUM_QUARTER-size, "%s", age());
-    attron(A_BOLD);
+    attrset(COLOR_PAIR(HIGHLIGHT) | A_BOLD);
     int x = (COLS - COLNUM_QUARTER) / 2;
     int xx = (COLNUM_QUARTER - strlen(line)) / 2;
     mvprintw(YEAR_LINE, x + xx, "%s", line);
-    attroff(A_BOLD);
 }
 
 void draw_month(int m) {
@@ -146,7 +150,9 @@ void draw_month(int m) {
     tmp.tm_mon = m;
     strftime(line, COLNUM_MONTH, "%B", &tmp);
 
-    mvaddstr(y++, x + (COLNUM_MONTH - strlen(line)) / 2, line);
+    attrset(A_BOLD);
+    mvaddstr(y++, x + (COLNUM_MONTH - strlen(line)) / 2 + 1, line);
+    attrset(0);
     mvprintw(y++, x, "%s", CHINESE ? WEEK_cn : WEEK_en);
 
     int nday = ndayofmonth(tmp.tm_year + 1900, m);
@@ -215,32 +221,32 @@ int is_cursor_day(const struct tm* day) {
 
 /*  ---------------------------  op related ---------------- */
 
-static int redraw(int key) { return 0; }
+static ActionResult redraw(int key) { return AC_REFRESH; }
 
 /*
  *  move to last year, keep month and day
  */
-static int last_year(int key) {
+static ActionResult last_year(int key) {
     moveday(&date, -1, "year");
-    return 0;
+    return AC_REFRESH;
 }
 
-static int next_year(int key) { 
+static ActionResult next_year(int key) { 
     moveday(&date, 1, "year");
-    return 0;
+    return AC_REFRESH;
 }
 
-static int today(int key) {
+static ActionResult today(int key) {
     date = TODAY;
-    return 0;
+    return AC_REFRESH;
 }
 
-static int i18n(int key) {
+static ActionResult i18n(int key) {
     CHINESE = ~CHINESE;
-    return 0;
+    return AC_REFRESH;
 }
 
-static int up(int key) {
+static ActionResult up(int key) {
     if (date.tm_mday > 7) {
         date.tm_mday -= 7;
     } else {
@@ -249,10 +255,10 @@ static int up(int key) {
         int month   = (date.tm_mon + 9) % 12;
         getDate(&date, year, month, date.tm_wday, 0);
     }
-    return 0;
+    return AC_REFRESH;
 }
 
-static int down(int key) {
+static ActionResult down(int key) {
     if (date.tm_mday + 7 <= ndayofmonth(date.tm_year + 1900, date.tm_mon)) {
         date.tm_mday += 7;
     } else {
@@ -261,30 +267,63 @@ static int down(int key) {
         int month = (date.tm_mon + 3) % 12;
         getDate(&date, year, month, date.tm_wday, 1);
     }
-    return 0;
+    return AC_REFRESH;
 }
 
-static int yesterday(int key) {
+static ActionResult yesterday(int key) {
     moveday(&date, -1, "day");
-    return 0;
+    return AC_REFRESH;
 }
 
-static int tomorrow(int key) {
+static ActionResult tomorrow(int key) {
      moveday(&date, 1, "day");
-    return 0;
+    return AC_REFRESH;
 }
 
-static int hint(int key) {
-    int WIDTH = 40, GAP = 5;
+
+static const struct {
+    const char* key;
+    const char* val;
+} lhint[] = {
+    { .key = "       n: ", .val = "go to next year, keep month & day" },
+    { .key = "       p: ", .val = "go to last year, keep month & day" },
+    { .key = "       H: ", .val = "show this hint info              " },
+    { .key = "       i: ", .val = "international, english or chinese" },
+    { .key = "   ENTER: ", .val = "try to open diary if exist       " },
+    { .key = "       q: ", .val = "quit                             " },
+    { .key = NULL, .val = NULL }
+}, rhint[] = {
+    { .key = "       h: ", .val = "go to yesterday                  " },
+    { .key = "       l: ", .val = "go to tomorrow                   " },
+    { .key = "       k: ", .val = "move cursor up                   " },
+    { .key = "       j: ", .val = "move cursor down                 " },
+    { .key = "       0: ", .val = "move cursor to today             " },
+    { .key = NULL, .val = NULL }
+};
+static ActionResult hint(int key) {
     int y = 0;
     erase();
-    mvprintw(y++, 0, "%s", "yraid "VERSION" - (C) 2020-2024 Jovan.");
+
+    attrset(COLOR_PAIR(HIGHLIGHT) | A_BOLD);
+    mvprintw(y++, 0, "%s", "yraid " VERSION " - (C) 2020-2024 Jovan.");
     y++;
-    mvaddnstr(y, 0, "n: next year", WIDTH); mvaddnstr(y, WIDTH + GAP, "i: chinese/english", WIDTH); y++;
-    mvaddnstr(y, 0, "p: last year", WIDTH); mvaddnstr(y, WIDTH + GAP, "0: back to today", WIDTH); y++;
-    mvaddnstr(y, 0, "H: show this hint", WIDTH); mvaddnstr(y, WIDTH + GAP, "ENTER: try to open daily", WIDTH); y++;
-    y++;
-    mvprintw(y, 0, "Press any key to return.");
+    int li = 0;
+    for (li = 0; lhint[li].key; li++) {
+        attrset(COLOR_PAIR(HIGHLIGHT) | A_BOLD);
+        mvaddstr(y + li, 0, lhint[li].key);
+        attrset(COLOR_PAIR(DEFAULT));
+        mvaddstr(y + li, 10, lhint[li].val);
+    }
+    int ri = 0;
+    for (ri = 0; rhint[ri].key; ri++) {
+        attrset(COLOR_PAIR(HIGHLIGHT) | A_BOLD);
+        mvaddstr(y + ri, 50, rhint[ri].key);
+        attrset(COLOR_PAIR(DEFAULT));
+        mvaddstr(y + ri, 60, rhint[ri].val);
+    }
+    y += li > ri ? li : ri;
+    attrset(COLOR_PAIR(HIGHLIGHT) | A_BOLD);
+    mvprintw(++y, 0, "Press any key to return.");
     refresh();
 
     int k = ERR;
@@ -296,10 +335,10 @@ static int hint(int key) {
         }
         break;
     } while(1);
-    return 0;
+    return AC_REFRESH;
 }
 
-static int preview(int key) {
+static ActionResult preview(int key) {
     if (!daily_exist(&date)) return 0;
 
     char filename[BUFSIZ];
@@ -399,7 +438,11 @@ static int preview(int key) {
     
     munmap(map, len);
     close(fd);
-    return 0;
+    return AC_REFRESH;
+}
+
+static ActionResult quit() {
+    return AC_QUIT;
 }
 
 void load_actions() {
@@ -423,6 +466,7 @@ void load_actions() {
     actions['l']        = tomorrow;
     actions['H']        = hint;
     actions[ENTER]      = preview;
+    actions['q']        = quit;
     actions[KEY_RESIZE] = redraw;
 }
 
