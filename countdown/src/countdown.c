@@ -10,27 +10,18 @@
 #include <unistd.h>
 #include <time.h>
 
-typedef enum Mode_ {
-    TICKTOCK, // countdown for specific seconds, you can pause it and continue it
-    DEADLINE, // countdown for deadline, you can not pause it
-    STOPWATCH, // stopwatch 
-    POMODORO,
-} Mode;
-
 
 static const long kInterval = 200/*ms*/;
-static void ticktock_count(Item* this) {
+static void ticktock_tick(Item* this) {
     usleep(kInterval * 1000);
     this->value -= kInterval/*ms*/;
     if (this->value <= 0) this->quit = 1;
 }
-static void deadline_count(Item* this) {
+static void deadline_tick(Item* this) {
     usleep(kInterval * 1000); 
-    if (time(NULL) * 1000 > this->value) {
-        this->quit = 1;
-    }
+    if (time(0) > this->value) this->quit = 1;
 }
-static void stopwatch_count(Item* this) {
+static void stopwatch_tick(Item* this) {
     usleep(kInterval * 1000); 
     this->value += kInterval/*ms*/;
 }
@@ -39,12 +30,11 @@ static Formatime* ticktock_getime(const Item* this) {
     return getformatime(this->value);
 }
 static Formatime* deadline_getime(const Item* this) {
-    return getformatime(this->value - time(NULL) * 1000);
+    return getformatime((this->value - time(NULL)) * 1000);
 }
 static Formatime* stopwatch_getime(const Item* this) {
     return getformatime(this->value);
 }
-
 
 static Color parse_color(const char* color) {
     if (!strcasecmp(color, "red")) return RED;
@@ -58,27 +48,24 @@ Item* Item_new(const Option* opt) {
     Item* this = (Item *)malloc(sizeof(Item));
     if (this == NULL) quit("init count down object fail");
     this->color = parse_color(opt->color);
+    this->quit = 0;
     this->draw  = DEFALUT_DRAW_MODE;
-    this->actions = calloc(KEY_MAX, sizeof(Action));
 
-    this->value = opt->sec * 1000 /* ms */;
-    long nowms = (long)time(0) * 1000;
-    if (0 == this->value) {
-        this->vt.count = stopwatch_count;
+    if (0 == opt->mode) {
+        this->value = 0;
+        this->vt.tick = stopwatch_tick;
         this->vt.getime = stopwatch_getime;
-        BindDefaultKeys(this);
-    } else if (nowms >= this->value) {
-        this->vt.count = ticktock_count;
+    } else if (1 == opt->mode) {
+        this->value = opt->value * 1000 /* ms */;
+        this->vt.tick = ticktock_tick;
         this->vt.getime = ticktock_getime;
-        BindDefaultKeys(this);
-    } else if (nowms < this->value) {
-        this->vt.count = deadline_count;
+    } else if (2 == opt->mode) {
+        this->value = opt->value;
+        this->vt.tick = deadline_tick;
         this->vt.getime = deadline_getime;
-        BindDeadlineKeys(this);
-    } else {
-        BindDefaultKeys(this);
-        // todo
     }
+    this->actions = calloc(KEY_MAX, sizeof(Action));
+    BindDefaultKeys(this);
     this->st = (State*)malloc(sizeof(State));
     this->st->item = this;
     return this;
@@ -96,7 +83,7 @@ static ActionResCode Actions(int key, State* s) {
     return item->actions[key] ? item->actions[key](s) : ACT_OK;
 }
 
-#define Item_Count(item) do { if (item->vt.count) item->vt.count(item); } while(0);
+#define TICK(item) do { if (item->vt.tick) item->vt.tick(item); } while(0);
 
 void Item_run(Item* this) {
     initcrt();
@@ -111,11 +98,9 @@ void Item_run(Item* this) {
 
         Item_draw(this);
 
-        Item_Count(this);
+        TICK(this);
 
     } while (1);
-
-    Item_delete(this);
 
     quit(0);
 }

@@ -6,7 +6,8 @@
 typedef struct Option_ {
     char color[OPT_COLOR_LEN];
     int pomodoro;
-    long sec;
+    int mode;
+    long value;
 } Option;
 
 typedef enum OptCode_ {

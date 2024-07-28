@@ -16,7 +16,6 @@ typedef ActionResCode (*Action)(State* s);
 struct Item_;
 typedef struct  Item_ Item;
 void BindDefaultKeys(Item *this);
-void BindDeadlineKeys(Item *this);
 
 
 #endif

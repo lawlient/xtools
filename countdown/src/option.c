@@ -1,4 +1,5 @@
 #include "option.h"
+#include "time-parser.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +39,8 @@ static void version() {
 static void init_option(Option* opt) {
     opt->color[0] = '\0';
     opt->pomodoro = 0;
-    opt->sec = 0;
+    opt->mode = 0;
+    opt->value = 0;
 }
 
 OptCode parse_option(int argc, char* argv[], Option* opt) {
@@ -53,7 +55,9 @@ OptCode parse_option(int argc, char* argv[], Option* opt) {
                 continue;
             }
             case 't': {
-                if (1 == sscanf(optarg, "%ld", &(opt->sec))) return OPT_ERR;
+                if (cmd_time(optarg)) return OPT_ERR;
+                opt->mode = (int)tsmode;
+                opt->value = (long)tscmd/* define in parser.y */;
                 continue;
 	        }
             case 'p': {

@@ -13,7 +13,7 @@ typedef void (*Item_Count)(Item*);
 
 typedef struct Vtable_ {
     Item_Time getime;
-    Item_Count count;
+    Item_Count tick;
 } Vtable;
 
 #define Item_GetimeFn(item) (item->vt.getime)

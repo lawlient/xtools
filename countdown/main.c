@@ -18,5 +18,6 @@ int main(int argc, char* argv[]) {
 
     Item* this = Item_new(&opt);
     Item_run(this);
+    Item_delete(this);
     return 0;
 }
